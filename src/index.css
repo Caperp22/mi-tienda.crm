@@ -1,0 +1,20 @@
+/* --- RESET TOTAL Y ABSOLUTO --- */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  /* Ponemos un fondo oscuro base para que nunca deslumbre en modo oscuro */
+  background-color: #0f172a; 
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Forzamos a que ningún elemento se desborde */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Eliminamos barras de desplazamiento horizontales molestas */
+body {
+  overflow-x: hidden;
+}
