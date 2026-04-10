@@ -18,3 +18,66 @@ html, body, #root {
 body {
   overflow-x: hidden;
 }
+
+/* =========================================================
+   MAGIA RESPONSIVE: ADAPTACIÓN AUTOMÁTICA A CELULARES 📱
+   ========================================================= */
+
+@media screen and (max-width: 768px) {
+  /* 1. BARRA DE NAVEGACIÓN (Se apila hacia abajo) */
+  nav {
+    flex-direction: column !important;
+    padding: 15px 10px !important;
+    gap: 15px !important;
+  }
+  nav > div {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 12px !important;
+  }
+
+  /* 2. ÁREA DEL ADMINISTRADOR (El menú negro se va arriba) */
+  div[style*="font-family: sans-serif"] {
+    flex-direction: column !important;
+  }
+  div[style*="250px"] {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 15px 10px !important;
+  }
+  /* Reduce los espacios blancos gigantes del Admin */
+  div[style*="padding: 40px"] {
+    padding: 20px 10px !important;
+  }
+
+  /* 3. ÁREA DEL CLIENTE (Márgenes y Catálogo) */
+  main {
+    grid-template-columns: 1fr !important; /* Los productos ocupan toda la pantalla */
+    padding: 0 15px 30px 15px !important;
+  }
+  /* Ajusta el Formulario de agendar y tablas de citas */
+  div[style*="1000px"], div[style*="600px"] {
+    padding: 20px 15px !important;
+    margin: 20px 10px !important;
+  }
+  /* Hace que las tarjetas de pedidos se vuelvan verticales */
+  div[style*="border-radius: 16px"], div[style*="border-radius:16px"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  /* 4. MENÚS FLOTANTES (Carrito y Notificaciones) */
+  div[style*="420px"] {
+    max-width: 100% !important; /* El carrito abarca toda la pantalla */
+  }
+  div[style*="320px"] {
+    width: 280px !important;
+    right: -60px !important; /* Centra la ventanita de notificaciones */
+  }
+
+  /* 5. BOTONES DE HORAS (De 4 columnas a 2 columnas) */
+  div[style*="grid-template-columns: repeat(4"], div[style*="grid-template-columns:repeat(4"] {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
