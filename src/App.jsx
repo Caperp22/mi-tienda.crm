@@ -2,30 +2,27 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
-// 1. Configuración de Base de Datos
 import { supabase } from './config/supabase';
-
-// 2. Componentes y Layouts
 import Sidebar from './components/Sidebar';
 
-// 3. Páginas del Administrador
 import Agenda from './pages/Agenda';
 import Inventario from './pages/Inventario';
 import Clientes from './pages/Clientes';
 import Ventas from './pages/Ventas';
 import Pedidos from './pages/Pedidos';
+import GestionAdmins from './pages/GestionAdmins'; // <-- NUEVA PANTALLA
 
-// 4. Páginas del Cliente
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
 import MisPedidos from './pages/MisPedidos';
 import MisCitas from './pages/MisCitas';
 import AgendarCita from './pages/AgendarCita';
-import MiPerfil from './pages/MiPerfil'; // <-- Nueva Pantalla
+import MiPerfil from './pages/MiPerfil'; 
 
 function App() {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [esAdmin, setEsAdmin] = useState(false); // <-- AHORA ES UN ESTADO
   
   const [esTemaOscuro, setEsTemaOscuro] = useState(() => {
     const temaGuardado = localStorage.getItem('miTemaOscuro');
@@ -38,8 +35,6 @@ function App() {
   const [refreshPedidos, setRefreshPedidos] = useState(0);
   const [refreshCitas, setRefreshCitas] = useState(0);               
 
-  const CORREO_ADMIN = 'caperp22@gmail.com'; 
-
   const manejarClickPedidos = () => { setNotificacionesAdmin(0); setRefreshPedidos(prev => prev + 1); };
   const manejarClickCitas = () => { setNotifCitasAdmin(0); setRefreshCitas(prev => prev + 1); };
 
@@ -47,24 +42,36 @@ function App() {
     localStorage.setItem('miTemaOscuro', esTemaOscuro);
   }, [esTemaOscuro]);
 
+  // VERIFICACIÓN DE SESIÓN Y ROL DE BASE DE DATOS
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUsuario(session?.user ?? null);
+    async function verificarSesionYRol(usuarioActual) {
+      if (usuarioActual) {
+        const { data } = await supabase.from('administradores').select('email').eq('email', usuarioActual.email);
+        setEsAdmin(data && data.length > 0);
+      } else {
+        setEsAdmin(false);
+      }
+      setUsuario(usuarioActual);
       setCargando(false);
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      verificarSesionYRol(session?.user ?? null);
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN') await new Promise(r => setTimeout(r, 1000));
-      setUsuario(session?.user ?? null);
+      verificarSesionYRol(session?.user ?? null);
     });
 
     return () => authListener.subscription.unsubscribe();
   }, []);
 
+  // SISTEMA DE NOTIFICACIONES
   useEffect(() => {
     if (!usuario) return;
 
-    if (usuario.email === CORREO_ADMIN) {
+    if (esAdmin) {
       const suscripcionPedidos = supabase
         .channel('admin-nuevos-pedidos')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'pedidos' }, (payload) => {
@@ -103,14 +110,12 @@ function App() {
 
       return () => { supabase.removeChannel(suscripcionClientePedidos); supabase.removeChannel(suscripcionClienteCitas); };
     }
-  }, [usuario]);
+  }, [usuario, esAdmin]); // <-- Ahora depende del estado esAdmin
 
   async function cerrarSesion() { await supabase.auth.signOut(); }
 
   if (cargando) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando sistema...</div>;
   if (!usuario) return <Login />;
-
-  const esAdmin = usuario.email === CORREO_ADMIN;
 
   // --- MUNDO ADMINISTRADOR ---
   if (esAdmin) {
@@ -129,6 +134,7 @@ function App() {
               <Route path="/inventario" element={<Inventario />} />
               <Route path="/pedidos" element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />
               <Route path="/ventas" element={<Ventas />} />
+              <Route path="/admins" element={<GestionAdmins />} /> {/* <-- NUEVA RUTA */}
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
