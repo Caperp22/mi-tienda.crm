@@ -10,14 +10,14 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
     { nombre: 'Inventario', ruta: '/inventario', icono: <Package size={20} /> },
     { nombre: 'Clientes', ruta: '/clientes', icono: <Users size={20} /> },
     { nombre: 'Ventas', ruta: '/ventas', icono: <DollarSign size={20} /> },
-    { nombre: 'Admins', ruta: '/admins', icono: <Shield size={20} /> }, // <-- NUEVO BOTÓN
+    { nombre: 'Admins', ruta: '/admins', icono: <Shield size={20} /> }, 
   ];
 
   return (
-    <div style={{ width: '250px', background: '#0f172a', minHeight: '100vh', padding: '20px 0', color: 'white', flexShrink: 0 }}>
+    <div className="admin-sidebar" style={{ width: '250px', background: '#0f172a', minHeight: '100vh', padding: '20px 0', color: 'white', flexShrink: 0 }}>
       <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '24px', letterSpacing: '1px', color: '#38bdf8' }}>CRM ADMIN</h2>
       
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+      <div className="admin-menu" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {menu.map((item) => {
           const estaActivo = ubicacion.pathname === item.ruta;
           return (

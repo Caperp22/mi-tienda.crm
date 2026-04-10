@@ -1,4 +1,6 @@
-/* --- RESET TOTAL Y ABSOLUTO --- */
+/* =========================================================
+   RESET TOTAL Y ABSOLUTO
+   ========================================================= */
 html, body, #root {
   margin: 0;
   padding: 0;
@@ -24,7 +26,12 @@ body {
    ========================================================= */
 
 @media screen and (max-width: 768px) {
-  /* 1. BARRA DE NAVEGACIÓN (Se apila hacia abajo) */
+  
+  /* ---------------------------------------------------
+     PARTE 1: ÁREA DE CLIENTES (Tienda, Citas, Perfil)
+     --------------------------------------------------- */
+  
+  /* Barra de navegación (Se apila hacia abajo) */
   nav {
     flex-direction: column !important;
     padding: 15px 10px !important;
@@ -36,38 +43,26 @@ body {
     gap: 12px !important;
   }
 
-  /* 2. ÁREA DEL ADMINISTRADOR (El menú negro se va arriba) */
-  div[style*="font-family: sans-serif"] {
-    flex-direction: column !important;
-  }
-  div[style*="250px"] {
-    width: 100% !important;
-    min-height: auto !important;
-    padding: 15px 10px !important;
-  }
-  /* Reduce los espacios blancos gigantes del Admin */
-  div[style*="padding: 40px"] {
-    padding: 20px 10px !important;
-  }
-
-  /* 3. ÁREA DEL CLIENTE (Márgenes y Catálogo) */
+  /* Catálogo de Productos (Ocupan toda la pantalla) */
   main {
-    grid-template-columns: 1fr !important; /* Los productos ocupan toda la pantalla */
+    grid-template-columns: 1fr !important; 
     padding: 0 15px 30px 15px !important;
   }
-  /* Ajusta el Formulario de agendar y tablas de citas */
-  div[style*="1000px"], div[style*="600px"] {
+
+  /* Formulario de agendar y tablas de citas */
+  div[style*="1000px"], div[style*="600px"], div[style*="500px"] {
     padding: 20px 15px !important;
     margin: 20px 10px !important;
   }
-  /* Hace que las tarjetas de pedidos se vuelvan verticales */
+
+  /* Tarjetas de pedidos y citas (Se vuelven verticales) */
   div[style*="border-radius: 16px"], div[style*="border-radius:16px"] {
     flex-direction: column !important;
     align-items: flex-start !important;
     gap: 10px !important;
   }
 
-  /* 4. MENÚS FLOTANTES (Carrito y Notificaciones) */
+  /* Menús flotantes (Carrito y Notificaciones) */
   div[style*="420px"] {
     max-width: 100% !important; /* El carrito abarca toda la pantalla */
   }
@@ -76,8 +71,66 @@ body {
     right: -60px !important; /* Centra la ventanita de notificaciones */
   }
 
-  /* 5. BOTONES DE HORAS (De 4 columnas a 2 columnas) */
+  /* Botones de horas al agendar (De 4 columnas a 2 columnas) */
   div[style*="grid-template-columns: repeat(4"], div[style*="grid-template-columns:repeat(4"] {
     grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ---------------------------------------------------
+     PARTE 2: ÁREA DE ADMINISTRADOR (Panel de control)
+     --------------------------------------------------- */
+
+  /* Contenedor principal: pasa de lado a lado a apilarse */
+  .admin-container {
+    flex-direction: column !important;
+  }
+
+  /* Barra lateral (Sidebar): Se vuelve un menú superior horizontal */
+  .admin-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    padding: 15px 10px 5px 10px !important;
+  }
+  
+  .admin-sidebar h2 {
+    font-size: 20px !important;
+    margin-bottom: 15px !important;
+  }
+  
+  /* Botones del menú deslizable */
+  .admin-menu {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding-bottom: 10px;
+  }
+  
+  .admin-menu a {
+    padding: 10px 15px !important;
+    white-space: nowrap !important; /* Evita que el texto se parta en dos renglones */
+    border-left: none !important;
+    border-bottom: 4px solid transparent;
+  }
+
+  /* La línea indicadora saldrá por debajo en celulares */
+  .admin-menu a[style*="#38bdf8"] {
+    border-bottom: 4px solid #38bdf8 !important;
+  }
+
+  /* Contenido principal del administrador */
+  .admin-main {
+    width: 100% !important;
+  }
+  
+  /* Cabecera del admin (Donde dice "Hola Jefe") */
+  .admin-header {
+    padding: 15px !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  /* Reduce los espacios blancos gigantes del Admin */
+  .admin-content {
+    padding: 20px 15px !important;
   }
 }

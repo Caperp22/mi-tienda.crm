@@ -10,7 +10,7 @@ import Inventario from './pages/Inventario';
 import Clientes from './pages/Clientes';
 import Ventas from './pages/Ventas';
 import Pedidos from './pages/Pedidos';
-import GestionAdmins from './pages/GestionAdmins'; // <-- NUEVA PANTALLA
+import GestionAdmins from './pages/GestionAdmins'; 
 
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
@@ -22,7 +22,7 @@ import MiPerfil from './pages/MiPerfil';
 function App() {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const [esAdmin, setEsAdmin] = useState(false); // <-- AHORA ES UN ESTADO
+  const [esAdmin, setEsAdmin] = useState(false); 
   
   const [esTemaOscuro, setEsTemaOscuro] = useState(() => {
     const temaGuardado = localStorage.getItem('miTemaOscuro');
@@ -110,7 +110,7 @@ function App() {
 
       return () => { supabase.removeChannel(suscripcionClientePedidos); supabase.removeChannel(suscripcionClienteCitas); };
     }
-  }, [usuario, esAdmin]); // <-- Ahora depende del estado esAdmin
+  }, [usuario, esAdmin]); 
 
   async function cerrarSesion() { await supabase.auth.signOut(); }
 
@@ -120,21 +120,21 @@ function App() {
   // --- MUNDO ADMINISTRADOR ---
   if (esAdmin) {
     return (
-      <div style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
+      <div className="admin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
         <Sidebar notificacionesAdmin={notificacionesAdmin} manejarClickPedidos={manejarClickPedidos} notifCitasAdmin={notifCitasAdmin} manejarClickCitas={manejarClickCitas} />
-        <div style={{ width: '100%', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ background: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
+        <div className="admin-main" style={{ width: '100%', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="admin-header" style={{ background: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
              <span style={{ fontWeight: 'bold', color: '#64748b', marginRight: '20px' }}>Hola, Jefe ({usuario.email})</span>
              <button onClick={cerrarSesion} style={{ padding: '8px 15px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cerrar Sesión</button>
           </div>
-          <div style={{ padding: '40px' }}>
+          <div className="admin-content" style={{ padding: '40px' }}>
             <Routes>
               <Route path="/" element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} />} />
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/inventario" element={<Inventario />} />
               <Route path="/pedidos" element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />
               <Route path="/ventas" element={<Ventas />} />
-              <Route path="/admins" element={<GestionAdmins />} /> {/* <-- NUEVA RUTA */}
+              <Route path="/admins" element={<GestionAdmins />} /> 
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
