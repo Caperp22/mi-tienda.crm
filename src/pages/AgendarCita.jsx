@@ -148,9 +148,12 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
           {/* --- FIN DROPDOWN DE NOTIFICACIONES --- */}
 
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: esTemaOscuro ? '#94a3b8' : '#64748b', fontSize: '14px', fontWeight: '500' }}>
-            <User size={18} /><span>{usuario?.email}</span>
-          </div>
+          
+          {/* --- NUEVO BOTÓN DE PERFIL AQUÍ --- */}
+          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
+            <User size={18} /><span>{usuario?.user_metadata?.nombre || 'Mi Perfil'}</span>
+          </Link>
+          
           <button onClick={cerrarSesion} style={{ padding: '8px 16px', background: esTemaOscuro ? '#334155' : '#f3f4f6', color: estilos.navLinks.color, border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', marginLeft: '5px' }}>Salir</button>
         </div>
       </nav>
