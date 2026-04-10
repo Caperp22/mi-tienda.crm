@@ -53,24 +53,53 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
   }
 
   async function confirmarPedido() {
-    if (carrito.length === 0) return Swal.fire('Carrito vacío', 'Agrega productos', 'info');
-    const totalCalculado = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
+      if (carrito.length === 0) return Swal.fire('Carrito vacío', 'Agrega productos', 'info');
+      
+      // Validar que el usuario tenga sus datos de perfil llenos antes de comprar
+      const nombre = usuario?.user_metadata?.nombre;
+      const telefono = usuario?.user_metadata?.telefono;
+      const direccion = usuario?.user_metadata?.direccion;
 
-    const { error } = await supabase.from('pedidos').insert([{
-      cliente_email: usuario.email, productos: carrito, total: totalCalculado, estado: 'Pendiente'
-    }]);
+      if (!nombre || !telefono || !direccion) {
+        Swal.fire({
+          title: 'Faltan datos de envío',
+          text: 'Por favor completa tu perfil (Nombre, Teléfono y Dirección) antes de realizar un pedido.',
+          icon: 'warning',
+          confirmButtonText: 'Ir a Mi Perfil'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate('/mi-perfil');
+          }
+        });
+        return;
+      }
 
-    if (error) return Swal.fire('Error', 'Hubo un problema', 'error');
+      const totalCalculado = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
 
-    let textoMensaje = "🛍️ *¡Nuevo Pedido Confirmado!*\n\n";
-    carrito.forEach(item => { textoMensaje += `▪️ ${item.cantidad}x ${item.nombre}\n`; });
-    textoMensaje += `\n💰 *Total: $${totalCalculado}*\n✉️ *Cliente:* ${usuario.email}`;
+      const { error } = await supabase.from('pedidos').insert([{
+        cliente_email: usuario.email, productos: carrito, total: totalCalculado, estado: 'Pendiente'
+      }]);
 
-    setCarrito([]);
-    setMostrarCarrito(false);
-    Swal.fire({ icon: 'success', title: '¡Pedido Registrado!', timer: 2000, showConfirmButton: false });
-    setTimeout(() => { window.open(`https://wa.me/${miNumeroWhatsApp}?text=${encodeURIComponent(textoMensaje)}`, '_blank'); }, 2000);
-  }
+      if (error) return Swal.fire('Error', 'Hubo un problema', 'error');
+
+      // Armamos el mensaje de WhatsApp súper completo
+      let textoMensaje = "🛍️ *¡Nuevo Pedido Confirmado!*\n\n";
+      carrito.forEach(item => { textoMensaje += `▪️ ${item.cantidad}x ${item.nombre}\n`; });
+      
+      textoMensaje += `\n💰 *Total: $${totalCalculado}*\n`;
+      textoMensaje += `--------------------------\n`;
+      textoMensaje += `👤 *Cliente:* ${nombre} (${usuario.email})\n`;
+      textoMensaje += `📞 *Teléfono:* ${telefono}\n`;
+      textoMensaje += `📍 *Dirección de Envío:* ${direccion}`;
+
+      setCarrito([]);
+      setMostrarCarrito(false);
+      Swal.fire({ icon: 'success', title: '¡Pedido Registrado!', timer: 2000, showConfirmButton: false });
+      
+      setTimeout(() => { 
+        window.open(`https://wa.me/${miNumeroWhatsApp}?text=${encodeURIComponent(textoMensaje)}`, '_blank'); 
+      }, 2000);
+    }
 
   const totalCarrito = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
   const totalArticulos = carrito.reduce((suma, item) => suma + item.cantidad, 0);
