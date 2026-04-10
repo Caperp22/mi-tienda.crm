@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './supabase';
 import Swal from 'sweetalert2';
 
+// 1. Configuración de Base de Datos
+import { supabase } from './config/supabase';
+
+// 2. Componentes y Layouts
 import Sidebar from './components/Sidebar';
+
+// 3. Páginas del Administrador
 import Agenda from './pages/Agenda';
 import Inventario from './pages/Inventario';
 import Clientes from './pages/Clientes';
 import Ventas from './pages/Ventas';
+import Pedidos from './pages/Pedidos';
+
+// 4. Páginas del Cliente
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
 import MisPedidos from './pages/MisPedidos';
 import MisCitas from './pages/MisCitas';
 import AgendarCita from './pages/AgendarCita';
-import Pedidos from './pages/Pedidos';
+import MiPerfil from './pages/MiPerfil'; // <-- Nueva Pantalla
 
 function App() {
   const [usuario, setUsuario] = useState(null);
@@ -24,9 +32,7 @@ function App() {
     return temaGuardado === 'true' ? true : false;
   });
 
-  // ¡NUEVO!: Ahora las notificaciones son una lista de mensajes
   const [notificaciones, setNotificaciones] = useState([]); 
-  
   const [notificacionesAdmin, setNotificacionesAdmin] = useState(0);
   const [notifCitasAdmin, setNotifCitasAdmin] = useState(0);         
   const [refreshPedidos, setRefreshPedidos] = useState(0);
@@ -75,7 +81,6 @@ function App() {
 
       return () => { supabase.removeChannel(suscripcionPedidos); supabase.removeChannel(suscripcionCitas); };
     } else {
-      // SI ES CLIENTE: Agregamos objetos a la lista de notificaciones
       const suscripcionClientePedidos = supabase
         .channel('cliente-actualizaciones')
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'pedidos', filter: `cliente_email=eq.${usuario.email}` }, (payload) => {
@@ -107,6 +112,7 @@ function App() {
 
   const esAdmin = usuario.email === CORREO_ADMIN;
 
+  // --- MUNDO ADMINISTRADOR ---
   if (esAdmin) {
     return (
       <div style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
@@ -131,7 +137,7 @@ function App() {
     );
   }
 
-  // 🛒 MUNDO CLIENTE
+  // --- MUNDO CLIENTE ---
   return (
     <div style={{ width: '100%', background: esTemaOscuro ? '#0f172a' : '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif', transition: 'background-color 0.3s' }}>
       <div style={{ padding: '0' }}>
@@ -140,6 +146,7 @@ function App() {
           <Route path="/agendar" element={<AgendarCita usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} />} />
           <Route path="/mis-citas" element={<MisCitas usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} />} />
           <Route path="/mis-pedidos" element={<MisPedidos usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} />} />
+          <Route path="/mi-perfil" element={<MiPerfil usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

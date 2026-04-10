@@ -1,28 +1,48 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../config/supabase';
+import { useState } from 'react';
+import { supabase } from '../config/supabase'; // <-- Ruta actualizada
+import Swal from 'sweetalert2';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bell, User, ShoppingBag } from 'lucide-react'; 
+import { Sun, Moon, Bell, User, Edit3 } from 'lucide-react';
 
-function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones }) {
+function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, rutaNotificacion }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
-  const [pedidos, setPedidos] = useState([]);
+  
+  // Cargamos los datos actuales si existen, si no, lo dejamos en blanco
+  const [nombre, setNombre] = useState(usuario?.user_metadata?.nombre || '');
+  const [telefono, setTelefono] = useState(usuario?.user_metadata?.telefono || '');
+  const [cargando, setCargando] = useState(false);
 
-  useEffect(() => {
-    async function obtenerPedidos() {
-      const { data } = await supabase.from('pedidos').select('*').eq('cliente_email', usuario?.email).order('id', { ascending: false }); 
-      if (data) setPedidos(data);
+  async function guardarPerfil(e) {
+    e.preventDefault();
+    setCargando(true);
+
+    // Esta es la función mágica de Supabase para actualizar los datos del usuario logueado
+    const { error } = await supabase.auth.updateUser({
+      data: { 
+        nombre: nombre, 
+        telefono: telefono 
+      }
+    });
+
+    setCargando(false);
+
+    if (error) {
+      Swal.fire('Error', error.message, 'error');
+    } else {
+      Swal.fire('¡Perfil Actualizado!', 'Tus datos se guardaron correctamente.', 'success');
     }
-    obtenerPedidos();
-  }, [usuario]);
+  }
 
   const estilos = {
-    container: { minHeight: '100vh', color: esTemaOscuro ? '#f8fafc' : '#0f172a', transition: 'color 0.3s' },
+    container: { minHeight: '100vh', color: esTemaOscuro ? '#f8fafc' : '#0f172a', transition: 'color 0.3s', overflowX: 'hidden' },
     navbar: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, position: 'sticky', top: 0, zIndex: 100 },
     navLinks: { color: esTemaOscuro ? '#e2e8f0' : '#4b5563', textDecoration: 'none', fontWeight: '500', transition: 'color 0.2s' },
     badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
-    card: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '25px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: esTemaOscuro ? '0 4px 6px -1px rgba(0,0,0,0.5)' : '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '15px' },
-    emptyState: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '40px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, textAlign: 'center', color: esTemaOscuro ? '#94a3b8' : '#64748b' }
+    formCard: { background: esTemaOscuro ? '#1e293b' : 'white', maxWidth: '500px', margin: '60px auto', padding: '40px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, boxShadow: esTemaOscuro ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)' },
+    label: { display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: esTemaOscuro ? '#cbd5e1' : '#475569' },
+    input: { width: '100%', padding: '14px', borderRadius: '8px', border: `1px solid ${esTemaOscuro ? '#475569' : '#cbd5e1'}`, background: esTemaOscuro ? '#0f172a' : '#f8fafc', color: esTemaOscuro ? 'white' : 'black', fontSize: '15px', marginBottom: '20px', boxSizing: 'border-box', outline: 'none' },
+    btnPrimary: { width: '100%', padding: '16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }
   };
 
   return (
@@ -33,7 +53,7 @@ function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, noti
           <Link to="/" style={estilos.navLinks}>Catálogo</Link>
           <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>
           <Link to="/mis-citas" style={estilos.navLinks}>Mis Citas</Link>
-          <Link to="/mis-pedidos" style={{...estilos.navLinks, color: '#3b82f6', fontWeight: 'bold'}}>Mis Pedidos</Link>
+          <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
           <button onClick={() => setEsTemaOscuro(!esTemaOscuro)} style={{ background: 'none', border: 'none', color: estilos.navLinks.color, cursor: 'pointer', padding: 0 }}><Sun size={22} /></button>
           
@@ -82,42 +102,39 @@ function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, noti
           {/* --- FIN DROPDOWN DE NOTIFICACIONES --- */}
 
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: esTemaOscuro ? '#94a3b8' : '#64748b', fontSize: '14px', fontWeight: '500' }}><User size={18} /><span>{usuario?.email}</span></div>
+          
+          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
+            <User size={18} /><span>{usuario?.user_metadata?.nombre || 'Mi Perfil'}</span>
+          </Link>
+          
           <button onClick={cerrarSesion} style={{ padding: '8px 16px', background: esTemaOscuro ? '#334155' : '#f3f4f6', color: estilos.navLinks.color, border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', marginLeft: '5px' }}>Salir</button>
         </div>
       </nav>
 
-      <div style={{ maxWidth: '1000px', margin: '40px auto', padding: '0 20px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '10px' }}>Historial de Compras</h1>
-        <p style={{ color: esTemaOscuro ? '#94a3b8' : '#6b7280', marginBottom: '40px', fontSize: '1.1rem' }}>Rastrea el estado de los productos que has comprado.</p>
+      <div style={estilos.formCard}>
+        <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+          <Edit3 size={40} color="#3b82f6" style={{ marginBottom: '10px' }} />
+          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '800' }}>Mi Perfil</h1>
+          <p style={{ color: esTemaOscuro ? '#94a3b8' : '#64748b', marginTop: '10px' }}>Actualiza tus datos de contacto.</p>
+        </div>
 
-        {pedidos.length === 0 ? (
-          <div style={estilos.emptyState}>
-            <ShoppingBag size={40} style={{ margin: '0 auto 10px auto', opacity: 0.5 }} />
-            <p style={{ fontSize: '1.1rem', margin: 0 }}>No has realizado ninguna compra de productos.</p>
-          </div>
-        ) : (
-          pedidos.map(pedido => (
-            <div key={pedido.id} style={estilos.card}>
-              <div>
-                <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: esTemaOscuro ? '#94a3b8' : '#6b7280' }}>Pedido #{pedido.id}</p>
-                <p style={{ margin: 0, fontWeight: '800', fontSize: '1.25rem' }}>Total: <span style={{ color: esTemaOscuro ? '#34d399' : '#10b981'}}>${pedido.total}</span></p>
-              </div>
-              <div style={{ flex: '1', minWidth: '200px' }}>
-                <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: 'bold' }}>Artículos:</p>
-                <ul style={{ margin: 0, paddingLeft: '20px', color: esTemaOscuro ? '#cbd5e1' : '#4b5563', fontSize: '14px' }}>
-                  {pedido.productos?.map((prod, index) => <li key={index}>{prod.cantidad}x {prod.nombre}</li>)}
-                </ul>
-              </div>
-              <div style={{ padding: '8px 16px', borderRadius: '999px', fontWeight: 'bold', fontSize: '14px', backgroundColor: pedido.estado === 'Pendiente' ? (esTemaOscuro ? '#451a03' : '#fef3c7') : pedido.estado === 'Enviado' ? (esTemaOscuro ? '#1e3a8a' : '#dbeafe') : (esTemaOscuro ? '#064e3b' : '#d1fae5'), color: pedido.estado === 'Pendiente' ? (esTemaOscuro ? '#fcd34d' : '#d97706') : pedido.estado === 'Enviado' ? (esTemaOscuro ? '#60a5fa' : '#2563eb') : (esTemaOscuro ? '#34d399' : '#059669') }}>
-                {pedido.estado}
-              </div>
-            </div>
-          ))
-        )}
+        <form onSubmit={guardarPerfil}>
+          <label style={estilos.label}>Correo Electrónico (No modificable)</label>
+          <input type="text" style={{...estilos.input, opacity: 0.6, cursor: 'not-allowed'}} value={usuario?.email} disabled />
+
+          <label style={estilos.label}>Nombre Completo</label>
+          <input type="text" style={estilos.input} placeholder="Ej. Juan Pérez" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+
+          <label style={estilos.label}>Teléfono o WhatsApp</label>
+          <input type="tel" style={estilos.input} placeholder="Ej. 5512345678" value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
+
+          <button type="submit" disabled={cargando} style={{...estilos.btnPrimary, opacity: cargando ? 0.5 : 1}}>
+            {cargando ? 'Guardando...' : 'Guardar Cambios'}
+          </button>
+        </form>
       </div>
     </div>
   );
 }
 
-export default MisPedidos;
+export default MiPerfil;

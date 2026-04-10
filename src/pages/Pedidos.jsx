@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Clock, Truck, CheckCircle, Eye, X } from 'lucide-react';
 

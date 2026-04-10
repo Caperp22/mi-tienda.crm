@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 // Importamos Edit (Lápiz) y X para el modal
 import { Search, MapPin, Phone, Mail, Trash2, Edit, X } from 'lucide-react';

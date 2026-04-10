@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Eye, EyeOff, Lock, LockOpen, User, MapPin } from 'lucide-react'; 
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Package, Plus, Edit, Trash2, Image as ImageIcon, AlignLeft, X } from 'lucide-react';
 

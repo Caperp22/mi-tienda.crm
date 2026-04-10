@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import { DollarSign, TrendingUp, ShoppingBag, Award } from 'lucide-react';
 
 function Ventas() {

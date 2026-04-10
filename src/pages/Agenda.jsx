@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle, ShieldAlert, Trash2 } from 'lucide-react';
 

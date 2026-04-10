@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../supabase';
+import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, User, Calendar, Clock, Sparkles } from 'lucide-react';
