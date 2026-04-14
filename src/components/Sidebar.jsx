@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Package, Users, ShoppingBag, DollarSign, Shield, Settings } from 'lucide-react';
+import { Calendar, Package, Users, ShoppingBag, DollarSign, Shield, Settings, Briefcase } from 'lucide-react';
 
 function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, manejarClickCitas, empresaConfig }) {
 
@@ -7,6 +7,7 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
 
   const menu = [
     { nombre: 'Agenda', ruta: '/', icono: <Calendar size={20} />, notif: notifCitasAdmin, onClick: manejarClickCitas, mostrar: empresaConfig?.usa_citas },
+    { nombre: 'Servicios', ruta: '/servicios', icono: <Briefcase size={20} />, mostrar: empresaConfig?.usa_citas },
     { nombre: 'Pedidos', ruta: '/pedidos', icono: <ShoppingBag size={20} />, notif: notificacionesAdmin, onClick: manejarClickPedidos, mostrar: empresaConfig?.usa_inventario },
     { nombre: 'Inventario', ruta: '/inventario', icono: <Package size={20} />, mostrar: empresaConfig?.usa_inventario },
     { nombre: 'Clientes', ruta: '/clientes', icono: <Users size={20} />, mostrar: true },

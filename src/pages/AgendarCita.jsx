@@ -13,17 +13,43 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
   
   const [fechasBloqueadas, setFechasBloqueadas] = useState([]);
   const [horasOcupadas, setHorasOcupadas] = useState([]);
+  const [listaServicios, setListaServicios] = useState([]);
   const [cargando, setCargando] = useState(false);
 
-  const HORARIOS_ATENCION = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+  // --- MAGIA: GENERADOR DE HORARIOS DINÁMICO ---
+  function generarHorarios() {
+    const apertura = empresaConfig?.hora_apertura || '09:00';
+    const cierre = empresaConfig?.hora_cierre || '18:00';
+    const intervalo = empresaConfig?.intervalo_citas || 30;
+    
+    let [horaInicio, minInicio] = apertura.split(':').map(Number);
+    let [horaFin, minFin] = cierre.split(':').map(Number);
+
+    const horarios = [];
+    let tiempoActual = horaInicio * 60 + (minInicio || 0);
+    const tiempoCierre = horaFin * 60 + (minFin || 0);
+
+    while (tiempoActual < tiempoCierre) {
+      const h = Math.floor(tiempoActual / 60).toString().padStart(2, '0');
+      const m = (tiempoActual % 60).toString().padStart(2, '0');
+      horarios.push(`${h}:${m}`);
+      tiempoActual += Number(intervalo); // Saltos dinámicos configurables
+    }
+    return horarios;
+  }
+  const HORARIOS_ATENCION = generarHorarios();
 
   useEffect(() => {
-    async function obtenerBloqueos() {
+    async function obtenerDatosIniciales() {
       if (!empresaId) return;
-      const { data } = await supabase.from('fechas_bloqueadas').select('*').eq('empresa_id', empresaId);
-      if (data) setFechasBloqueadas(data);
+      // Traemos bloqueos
+      const { data: bloqueos } = await supabase.from('fechas_bloqueadas').select('*').eq('empresa_id', empresaId);
+      if (bloqueos) setFechasBloqueadas(bloqueos);
+      // Traemos servicios de la empresa
+      const { data: serviciosDb } = await supabase.from('servicios').select('*').eq('empresa_id', empresaId).order('nombre');
+      if (serviciosDb) setListaServicios(serviciosDb);
     }
-    obtenerBloqueos();
+    obtenerDatosIniciales();
   }, [empresaId]);
 
   async function manejarCambioFecha(e) {
@@ -185,9 +211,9 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
           <label style={estilos.label}>¿Qué servicio necesitas?</label>
           <select style={estilos.input} value={servicio} onChange={(e) => setServicio(e.target.value)} required>
             <option value="">-- Selecciona una opción --</option>
-            <option value="Asesoría General">Asesoría General</option>
-            <option value="Servicio Técnico">Servicio Técnico</option>
-            <option value="Reunión de Negocios">Reunión de Negocios</option>
+            {listaServicios.map(s => (
+              <option key={s.id} value={s.nombre}>{s.nombre} {s.precio > 0 ? `(Desde $${s.precio})` : ''}</option>
+            ))}
           </select>
 
           <label style={estilos.label}><Calendar size={16} style={{ verticalAlign: 'middle', marginRight: '5px' }}/> Día de la cita</label>

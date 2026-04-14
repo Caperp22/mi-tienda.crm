@@ -9,6 +9,7 @@ import Agenda from './pages/Agenda';
 import Inventario from './pages/Inventario';
 import Clientes from './pages/Clientes';
 import Ventas from './pages/Ventas';
+import Servicios from './pages/Servicios';
 import Pedidos from './pages/Pedidos';
 import GestionAdmins from './pages/GestionAdmins'; 
 import GestionEmpresas from './pages/GestionEmpresas';
@@ -33,7 +34,10 @@ function useAuth() {
     usa_inventario: true,
     usa_citas: true,
     color_principal: '#3b82f6',
-    logo_url: null
+    logo_url: null,
+    hora_apertura: '09:00',
+    hora_cierre: '18:00',
+    intervalo_citas: 30
   });
 
   useEffect(() => {
@@ -71,7 +75,7 @@ function useAuth() {
       }
 
       if (currentEmpresaId) {
-        const { data: empData } = await supabase.from('empresas').select('nombre, usa_inventario, usa_citas, color_principal, logo_url').eq('id', currentEmpresaId).maybeSingle();
+        const { data: empData } = await supabase.from('empresas').select('nombre, usa_inventario, usa_citas, color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas').eq('id', currentEmpresaId).maybeSingle();
         if (empData) {
           setEmpresaNombre(empData.nombre);
           // Guardamos la configuración visual y de módulos
@@ -216,6 +220,7 @@ function App() {
               <Route path="/clientes" element={<Clientes />} />
               <Route path="/inventario" element={<Inventario empresaId={empresaId} />} />
               <Route path="/pedidos" element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />
+              <Route path="/servicios" element={<Servicios empresaId={empresaId} />} />
               <Route path="/ventas" element={<Ventas />} />
               <Route path="/admins" element={<GestionAdmins />} /> 
               <Route path="/ajustes" element={<AjustesTienda empresaId={empresaId} />} />

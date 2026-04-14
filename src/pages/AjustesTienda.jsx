@@ -1,21 +1,27 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Settings, Image as ImageIcon, Palette, Save } from 'lucide-react';
+import { Settings, Image as ImageIcon, Palette, Save, Clock } from 'lucide-react';
 
 function AjustesTienda({ empresaId }) {
   const [colorPrincipal, setColorPrincipal] = useState('#3b82f6');
   const [logoUrl, setLogoUrl] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
+  const [horaApertura, setHoraApertura] = useState('09:00');
+  const [horaCierre, setHoraCierre] = useState('18:00');
+  const [intervaloCitas, setIntervaloCitas] = useState(30);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     async function cargarConfig() {
-      const { data } = await supabase.from('empresas').select('color_principal, logo_url').eq('id', empresaId).single();
+      const { data } = await supabase.from('empresas').select('color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas').eq('id', empresaId).single();
       if (data) {
         setColorPrincipal(data.color_principal || '#3b82f6');
         setLogoUrl(data.logo_url);
+        setHoraApertura(data.hora_apertura?.substring(0, 5) || '09:00');
+        setHoraCierre(data.hora_cierre?.substring(0, 5) || '18:00');
+        setIntervaloCitas(data.intervalo_citas || 30);
       }
       setCargando(false);
     }
@@ -49,7 +55,13 @@ function AjustesTienda({ empresaId }) {
 
       const { error } = await supabase
         .from('empresas')
-        .update({ color_principal: colorPrincipal, logo_url: nuevaUrl })
+        .update({ 
+          color_principal: colorPrincipal, 
+          logo_url: nuevaUrl,
+          hora_apertura: horaApertura,
+          hora_cierre: horaCierre,
+          intervalo_citas: intervaloCitas 
+        })
         .eq('id', empresaId);
 
       if (error) throw error;
@@ -117,6 +129,24 @@ function AjustesTienda({ empresaId }) {
                 <p style={{ fontSize: '13px', color: '#10b981', marginTop: '15px', marginBottom: '5px', fontWeight: 'bold' }}>✅ Nuevo logo listo para ser guardado.</p>
               </div>
             )}
+          </div>
+
+          <div style={estilos.inputGroup}>
+            <label style={estilos.label}><Clock size={16} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Horarios de Atención (Agenda)</label>
+            <div style={{ display: 'flex', gap: '15px', background: '#f8fafc', padding: '15px', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+              <div style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '5px' }}>Hora de Apertura</span>
+                <input type="time" style={{...estilos.fileInput, background: 'white'}} value={horaApertura} onChange={(e) => setHoraApertura(e.target.value)} required />
+              </div>
+              <div style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '5px' }}>Hora de Cierre</span>
+                <input type="time" style={{...estilos.fileInput, background: 'white'}} value={horaCierre} onChange={(e) => setHoraCierre(e.target.value)} required />
+              </div>
+              <div style={{ flex: 1 }}>
+                <span style={{ display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '5px' }}>Intervalo (Mins)</span>
+                <input type="number" min="5" step="5" style={{...estilos.fileInput, background: 'white'}} value={intervaloCitas} onChange={(e) => setIntervaloCitas(e.target.value)} required />
+              </div>
+            </div>
           </div>
 
           <button type="submit" disabled={guardando} style={{...estilos.btnPrimary, opacity: guardando ? 0.7 : 1}}>

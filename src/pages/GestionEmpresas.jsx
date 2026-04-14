@@ -10,6 +10,13 @@ function GestionEmpresas() {
   const [usaCitas, setUsaCitas] = useState(true);
   const [colorPrincipal, setColorPrincipal] = useState('#3b82f6');
   const [logoFile, setLogoFile] = useState(null);
+  const [horaApertura, setHoraApertura] = useState('09:00');
+  const [horaCierre, setHoraCierre] = useState('18:00');
+  const [intervaloCitas, setIntervaloCitas] = useState(30);
+
+  useEffect(() => {
+    cargarEmpresas();
+
 
   useEffect(() => {
 
