@@ -1,31 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Calendar, Clock, CheckCircle, XCircle, Trash2, ShieldAlert } from 'lucide-react';
 
-function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin }) {
+function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId }) {
   const [citas, setCitas] = useState([]);
   const [fechasBloqueadas, setFechasBloqueadas] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   const [nuevoBloqueo, setNuevoBloqueo] = useState({ fecha: '', motivo: '' });
 
-  useEffect(() => {
-    obtenerDatos();
-    
-    // Limpiamos la campanita roja al abrir esta pantalla
-    if (notifCitasAdmin > 0) {
-      setNotifCitasAdmin(0);
-    }
-  }, [refreshCitas, notifCitasAdmin]); 
-
-  async function obtenerDatos() {
-    setCargando(true);
-    
+  const obtenerDatos = useCallback(async () => {
     // Traer Citas
     const { data: dataCitas } = await supabase
       .from('citas')
       .select('*')
+      .eq('empresa_id', empresaId)
       .order('fecha', { ascending: true });
     if (dataCitas) setCitas(dataCitas);
 
@@ -33,11 +23,24 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin }) {
     const { data: dataBloqueos } = await supabase
       .from('fechas_bloqueadas')
       .select('*')
+      .eq('empresa_id', empresaId)
       .order('fecha', { ascending: true });
     if (dataBloqueos) setFechasBloqueadas(dataBloqueos);
     
     setCargando(false);
-  }
+  }, [empresaId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => obtenerDatos(), 0);
+    
+    // Limpiamos la campanita roja al abrir esta pantalla
+    if (notifCitasAdmin > 0) {
+      // Usamos setTimeout para deferir la limpieza y evitar el "cascading render"
+      setTimeout(() => setNotifCitasAdmin(0), 0);
+    }
+
+    return () => clearTimeout(timer);
+  }, [refreshCitas, notifCitasAdmin, obtenerDatos, setNotifCitasAdmin]); 
 
   async function cambiarEstado(id, nuevoEstado) {
     const { error } = await supabase
@@ -64,7 +67,7 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin }) {
     e.preventDefault();
     const { data, error } = await supabase
       .from('fechas_bloqueadas')
-      .insert([nuevoBloqueo])
+      .insert([{ ...nuevoBloqueo, empresa_id: empresaId }])
       .select();
 
     if (!error && data) {

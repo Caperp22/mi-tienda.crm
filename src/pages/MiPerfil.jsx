@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, User, Edit3 } from 'lucide-react';
 
-function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, rutaNotificacion }) {
+function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaNombre }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   
@@ -49,7 +49,7 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Mi Tienda</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre || 'Mi Tienda'}</div>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
           <Link to="/" style={estilos.navLinks}>Catálogo</Link>
           <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>

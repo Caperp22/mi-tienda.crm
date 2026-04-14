@@ -3,7 +3,7 @@ import { supabase } from '../config/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, User, ShoppingBag } from 'lucide-react'; 
 
-function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones }) {
+function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaNombre }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [pedidos, setPedidos] = useState([]);
@@ -28,7 +28,7 @@ function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, noti
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Mi Tienda</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre || 'Mi Tienda'}</div>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
           <Link to="/" style={estilos.navLinks}>Catálogo</Link>
           <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>

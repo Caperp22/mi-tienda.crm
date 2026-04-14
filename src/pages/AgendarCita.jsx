@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, User, Calendar, Clock, Sparkles } from 'lucide-react';
 
-function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones }) {
+function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [fecha, setFecha] = useState('');
@@ -19,11 +19,12 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
 
   useEffect(() => {
     async function obtenerBloqueos() {
-      const { data } = await supabase.from('fechas_bloqueadas').select('*');
+      if (!empresaId) return;
+      const { data } = await supabase.from('fechas_bloqueadas').select('*').eq('empresa_id', empresaId);
       if (data) setFechasBloqueadas(data);
     }
     obtenerBloqueos();
-  }, []);
+  }, [empresaId]);
 
   async function manejarCambioFecha(e) {
     const diaSeleccionado = e.target.value;
@@ -44,7 +45,7 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
     setFecha(diaSeleccionado);
     setHora(''); 
     
-    const { data } = await supabase.from('citas').select('hora').eq('fecha', diaSeleccionado).neq('estado', 'Cancelada');
+    const { data } = await supabase.from('citas').select('hora').eq('fecha', diaSeleccionado).eq('empresa_id', empresaId).neq('estado', 'Cancelada');
 
     if (data) setHorasOcupadas(data.map(cita => cita.hora.substring(0, 5)));
   }
@@ -59,7 +60,8 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
       fecha: fecha,
       hora: hora,
       servicio: servicio,
-      estado: 'Pendiente'
+      estado: 'Pendiente',
+      empresa_id: empresaId
     }]);
 
     setCargando(false);
@@ -93,7 +95,7 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Mi Tienda</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre}</div>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
           <Link to="/" style={estilos.navLinks}>Catálogo</Link>
           <Link to="/agendar" style={{...estilos.navLinks, color: '#3b82f6', fontWeight: 'bold'}}>Agendar Cita</Link>

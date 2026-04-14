@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { Package, Plus, Edit, Trash2, Image as ImageIcon, AlignLeft, X } from 'lucide-react';
 
-function Inventario() {
+function Inventario({ empresaId }) {
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   
@@ -17,16 +17,16 @@ function Inventario() {
     descripcion: ''
   });
 
-  useEffect(() => {
-    obtenerProductos();
-  }, []);
-
-  async function obtenerProductos() {
-    setCargando(true);
-    const { data, error } = await supabase.from('productos').select('*').order('id', { ascending: false });
+  const obtenerProductos = useCallback(async () => {
+    const { data, error } = await supabase.from('productos').select('*').eq('empresa_id', empresaId).order('id', { ascending: false });
     if (!error) setProductos(data);
     setCargando(false);
-  }
+  }, [empresaId]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => obtenerProductos(), 0);
+    return () => clearTimeout(timer);
+  }, [obtenerProductos]);
 
   async function guardarProducto(e) {
     e.preventDefault();
@@ -34,7 +34,7 @@ function Inventario() {
       return Swal.fire('Error', 'Nombre, precio y stock son obligatorios', 'warning');
     }
 
-    const { error } = await supabase.from('productos').insert([nuevoProducto]);
+    const { error } = await supabase.from('productos').insert([{ ...nuevoProducto, empresa_id: empresaId }]);
 
     if (error) {
       Swal.fire('Error', error.message, 'error');

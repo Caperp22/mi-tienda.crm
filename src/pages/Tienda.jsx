@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { ShoppingCart, Sun, Moon, X, ShoppingBag, Plus, Minus, Bell, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
-function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones }) {
+function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [productos, setProductos] = useState([]);
@@ -24,11 +24,12 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
 
   useEffect(() => {
     async function obtenerProductos() {
-      const { data, error } = await supabase.from('productos').select('*').gt('stock', 0);
+      if (!empresaId) return; // Si no hay empresa seleccionada, no traemos nada
+      const { data, error } = await supabase.from('productos').select('*').eq('empresa_id', empresaId).gt('stock', 0);
       if (!error) setProductos(data);
     }
     obtenerProductos();
-  }, []);
+  }, [empresaId]);
 
   function agregarAlCarrito(producto) {
     const existe = carrito.find(item => item.id === producto.id);
@@ -77,7 +78,11 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
       const totalCalculado = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
 
       const { error } = await supabase.from('pedidos').insert([{
-        cliente_email: usuario.email, productos: carrito, total: totalCalculado, estado: 'Pendiente'
+        cliente_email: usuario.email, 
+        productos: carrito, 
+        total: totalCalculado, 
+        estado: 'Pendiente',
+        empresa_id: empresaId
       }]);
 
       if (error) return Swal.fire('Error', 'Hubo un problema', 'error');
@@ -131,7 +136,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>Mi Tienda</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre}</div>
         
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
           <Link to="/" style={{...estilos.navLinks, color: '#3b82f6', fontWeight: 'bold'}}>Catálogo</Link>

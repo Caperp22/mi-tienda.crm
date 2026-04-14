@@ -19,6 +19,8 @@ function Login() {
     setCargando(true);
     setLoginExitoso(false);
 
+    const tiendaActual = localStorage.getItem('tiendaActual');
+
     if (esRegistro) {
       if (!nombre) {
         setCargando(false);
@@ -26,26 +28,30 @@ function Login() {
       }
 
       // 1. Guardamos en la Bóveda de Seguridad (Auth)
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: { nombre, direccion, telefono: '' } // Guardamos datos a nivel global
+        }
+      });
       
       if (error) {
-        Swal.fire('Error', error.message, 'error');
+        if (error.message.includes('already registered') || error.status === 422) {
+          Swal.fire('Cuenta existente', 'Tu correo ya pertenece a nuestra red de tiendas. Por favor, selecciona "Iniciar Sesión".', 'info');
+        } else {
+          Swal.fire('Error', error.message, 'error');
+        }
       } else {
         // 2. Guardamos en el Directorio de Clientes (Tabla Pública)
-        const { error: errorInsert } = await supabase.from('clientes').insert([
-          { 
+        if (tiendaActual) {
+          await supabase.from('clientes').insert([{ 
             nombre: nombre, 
-            correo: email, // <--- ¡AQUÍ ESTÁ LA CORRECCIÓN CLAVE!
+            correo: email,
             telefono: '', 
-            direccion: direccion 
-          }
-        ]);
-        
-        // Si hay error al guardar en la tabla, te lo mostrará
-        if (errorInsert) {
-           Swal.fire('Error de Tabla', errorInsert.message, 'error');
-           setCargando(false);
-           return;
+            direccion: direccion,
+            empresa_id: tiendaActual
+          }]);
         }
 
         Swal.fire('¡Éxito!', 'Cuenta creada correctamente. Ya puedes iniciar sesión.', 'success');
@@ -61,6 +67,22 @@ function Login() {
         Swal.fire('Error', 'Credenciales incorrectas', 'error');
         setCargando(false);
       } else {
+          // --- MAGIA MULTI-TENANT: Agregar al directorio de la nueva tienda ---
+          if (tiendaActual) {
+            const { data: clienteExistente } = await supabase.from('clientes')
+              .select('id').eq('correo', email).eq('empresa_id', tiendaActual).maybeSingle();
+
+            if (!clienteExistente) {
+              const meta = data.user.user_metadata;
+              await supabase.from('clientes').insert([{
+                nombre: meta?.nombre || 'Cliente Web',
+                correo: email,
+                telefono: meta?.telefono || '',
+                direccion: meta?.direccion || '',
+                empresa_id: tiendaActual
+              }]);
+            }
+          }
         setLoginExitoso(true);
       }
     }
