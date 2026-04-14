@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabase';
 import { DollarSign, TrendingUp, ShoppingBag, Award } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 function Ventas() {
   const [pedidos, setPedidos] = useState([]);
@@ -30,7 +31,25 @@ function Ventas() {
       conteoProductos[prod.nombre] = (conteoProductos[prod.nombre] || 0) + prod.cantidad;
     });
   });
-  const productoEstrella = Object.keys(conteoProductos).reduce((a, b) => conteoProductos[a] > conteoProductos[b] ? a : b, "Ninguno");
+  const productoEstrella = Object.keys(conteoProductos).length > 0 
+    ? Object.keys(conteoProductos).reduce((a, b) => conteoProductos[a] > conteoProductos[b] ? a : b) 
+    : "Ninguno";
+
+  // --- PREPARAR DATOS PARA LA GRÁFICA ---
+  const ventasPorFecha = {};
+  pedidos.forEach(p => {
+    const fechaBase = new Date(p.created_at);
+    const key = fechaBase.toISOString().split('T')[0]; // Agrupamos por día (YYYY-MM-DD)
+    ventasPorFecha[key] = (ventasPorFecha[key] || 0) + Number(p.total);
+  });
+
+  const datosGrafica = Object.keys(ventasPorFecha).sort().map(key => {
+    const dateObj = new Date(key + "T00:00:00"); // Forzamos la zona horaria local
+    return {
+      fecha: dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+      ventas: ventasPorFecha[key]
+    };
+  });
 
   const estilos = {
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', marginTop: '20px' },
@@ -83,6 +102,31 @@ function Ventas() {
           </div>
         </div>
 
+      </div>
+
+      {/* SECCIÓN DE LA GRÁFICA */}
+      <div style={{ marginTop: '30px', background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: '20px', color: '#1e293b', margin: '0 0 20px 0' }}>Tendencia de Ingresos Diarios</h2>
+        
+        {datosGrafica.length === 0 ? (
+          <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0' }}>No hay suficientes datos para generar la gráfica.</p>
+        ) : (
+          <div style={{ width: '100%', height: '350px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={datosGrafica} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(val) => `$${val}`} dx={-5} />
+                <Tooltip 
+                  cursor={{ fill: '#f8fafc' }}
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontWeight: 'bold', color: '#1e293b' }}
+                  formatter={(value) => [`$${value}`, 'Ingresos']}
+                />
+                <Bar dataKey="ventas" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={40} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   );

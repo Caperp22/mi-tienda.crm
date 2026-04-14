@@ -13,6 +13,7 @@ import Pedidos from './pages/Pedidos';
 import GestionAdmins from './pages/GestionAdmins'; 
 import GestionEmpresas from './pages/GestionEmpresas';
 import GestionAdminsGlobal from './pages/GestionAdminsGlobal';
+import AjustesTienda from './pages/AjustesTienda';
 
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
@@ -28,6 +29,12 @@ function useAuth() {
   const [rol, setRol] = useState('cliente'); // 'superadmin', 'admin', 'cliente'
   const [empresaId, setEmpresaId] = useState(null);
   const [empresaNombre, setEmpresaNombre] = useState('Mi Tienda');
+  const [empresaConfig, setEmpresaConfig] = useState({
+    usa_inventario: true,
+    usa_citas: true,
+    color_principal: '#3b82f6',
+    logo_url: null
+  });
 
   useEffect(() => {
     // 1. Capturar ID de la tienda desde la URL (SaaS Multi-tenant)
@@ -64,8 +71,12 @@ function useAuth() {
       }
 
       if (currentEmpresaId) {
-        const { data: empData } = await supabase.from('empresas').select('nombre').eq('id', currentEmpresaId).maybeSingle();
-        if (empData) setEmpresaNombre(empData.nombre);
+        const { data: empData } = await supabase.from('empresas').select('nombre, usa_inventario, usa_citas, color_principal, logo_url').eq('id', currentEmpresaId).maybeSingle();
+        if (empData) {
+          setEmpresaNombre(empData.nombre);
+          // Guardamos la configuración visual y de módulos
+          setEmpresaConfig(empData);
+        }
       }
 
       setUsuario(usuarioActual);
@@ -84,11 +95,11 @@ function useAuth() {
     return () => authListener.subscription.unsubscribe();
   }, []);
 
-  return { usuario, rol, empresaId, empresaNombre, cargando };
+  return { usuario, rol, empresaId, empresaNombre, empresaConfig, cargando };
 }
 
 function App() {
-  const { usuario, rol, empresaId, empresaNombre, cargando } = useAuth();
+  const { usuario, rol, empresaId, empresaNombre, empresaConfig, cargando } = useAuth();
   
   const [esTemaOscuro, setEsTemaOscuro] = useState(() => {
     const temaGuardado = localStorage.getItem('miTemaOscuro');
@@ -193,7 +204,7 @@ function App() {
   if (rol === 'admin') {
     return (
       <div className="admin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
-        <Sidebar notificacionesAdmin={notificacionesAdmin} manejarClickPedidos={manejarClickPedidos} notifCitasAdmin={notifCitasAdmin} manejarClickCitas={manejarClickCitas} />
+        <Sidebar notificacionesAdmin={notificacionesAdmin} manejarClickPedidos={manejarClickPedidos} notifCitasAdmin={notifCitasAdmin} manejarClickCitas={manejarClickCitas} empresaConfig={empresaConfig} />
         <div className="admin-main" style={{ width: '100%', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <div className="admin-header" style={{ background: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
              <span style={{ fontWeight: 'bold', color: '#64748b', marginRight: '20px' }}>Hola, Jefe ({usuario.email})</span>
@@ -207,6 +218,7 @@ function App() {
               <Route path="/pedidos" element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />
               <Route path="/ventas" element={<Ventas />} />
               <Route path="/admins" element={<GestionAdmins />} /> 
+              <Route path="/ajustes" element={<AjustesTienda empresaId={empresaId} />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </div>
@@ -225,11 +237,22 @@ function App() {
           </div>
         )}
         <Routes>
-          <Route path="/" element={<Tienda usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} />} />
-          <Route path="/agendar" element={<AgendarCita usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} />} />
-          <Route path="/mis-citas" element={<MisCitas usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} />} />
-          <Route path="/mis-pedidos" element={<MisPedidos usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} />} />
-          <Route path="/mi-perfil" element={<MiPerfil usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} />} />
+          {/* Ruteo inteligente basado en la configuración del negocio */}
+          <Route path="/" element={
+            empresaConfig.usa_inventario 
+              ? <Tienda usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} /> 
+              : (empresaConfig.usa_citas ? <Navigate to="/agendar" /> : <div>Esta tienda no tiene servicios activos.</div>)
+          } />
+          
+          <Route path="/agendar" element={
+            empresaConfig.usa_citas
+              ? <AgendarCita usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />
+              : <Navigate to="/" />
+          } />
+          
+          <Route path="/mis-citas" element={<MisCitas usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />} />
+          <Route path="/mis-pedidos" element={<MisPedidos usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />} />
+          <Route path="/mi-perfil" element={<MiPerfil usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

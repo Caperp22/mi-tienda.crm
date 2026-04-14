@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { ShoppingCart, Sun, Moon, X, ShoppingBag, Plus, Minus, Bell, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
-function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre }) {
+function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre, empresaConfig }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [productos, setProductos] = useState([]);
@@ -116,16 +116,16 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
     heroSection: { padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, marginBottom: '30px' },
     heroTitle: { fontSize: '2.5rem', fontWeight: '800', margin: '0 0 10px 0' },
     heroSubtitle: { fontSize: '1.1rem', color: esTemaOscuro ? '#94a3b8' : '#64748b', margin: 0 },
-    badge: { position: 'absolute', top: '-8px', right: '-8px', background: '#ef4444', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' },
-    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
+    badge: { position: 'absolute', top: '-8px', right: '-8px', background: empresaConfig?.color_principal || '#ef4444', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' },
+    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: empresaConfig?.color_principal || '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px', padding: '0 20px 60px 20px', maxWidth: '1200px', margin: '0 auto' },
     card: { background: esTemaOscuro ? '#1e293b' : '#ffffff', borderRadius: '20px', overflow: 'hidden', boxShadow: esTemaOscuro ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)', border: `1px solid ${esTemaOscuro ? '#334155' : '#f1f5f9'}`, display: 'flex', flexDirection: 'column', transition: 'transform 0.2s ease' },
     productImage: { width: '100%', height: '240px', objectFit: 'cover' },
     cardContent: { padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 },
     productTitle: { margin: '0 0 5px 0', fontSize: '1.25rem', fontWeight: '700' },
     productDesc: { fontSize: '0.9rem', color: esTemaOscuro ? '#94a3b8' : '#64748b', marginBottom: '15px', lineHeight: '1.5' },
-    productPrice: { fontSize: '1.5rem', fontWeight: '800', color: esTemaOscuro ? '#34d399' : '#10b981', margin: '0 0 8px 0' },
-    btnPrimary: { width: '100%', padding: '14px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', marginTop: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
+    productPrice: { fontSize: '1.5rem', fontWeight: '800', color: empresaConfig?.color_principal || '#10b981', margin: '0 0 8px 0' },
+    btnPrimary: { width: '100%', padding: '14px', background: empresaConfig?.color_principal || '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', marginTop: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
     overlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', zIndex: 200, opacity: mostrarCarrito ? 1 : 0, visibility: mostrarCarrito ? 'visible' : 'hidden', transition: 'all 0.3s ease-in-out' },
     drawer: { position: 'fixed', top: 0, right: 0, width: '100%', maxWidth: '420px', height: '100vh', background: esTemaOscuro ? '#0f172a' : '#ffffff', zIndex: 201, transform: mostrarCarrito ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s ease-in-out', boxShadow: '-10px 0 30px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', padding: '30px', boxSizing: 'border-box' },
     qtySelector: { display: 'flex', alignItems: 'center', background: esTemaOscuro ? '#1e293b' : '#f1f5f9', borderRadius: '8px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, overflow: 'hidden' },
@@ -136,13 +136,28 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {empresaConfig?.logo_url ? (
+            <img src={empresaConfig.logo_url} alt={empresaNombre} style={{ height: '40px', objectFit: 'contain' }} />
+          ) : (
+            <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre}</div>
+          )}
+        </div>
         
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
-          <Link to="/" style={{...estilos.navLinks, color: '#3b82f6', fontWeight: 'bold'}}>Catálogo</Link>
-          <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>
-          <Link to="/mis-citas" style={estilos.navLinks}>Mis Citas</Link>
-          <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
+          {/* Renders Condicionales según el tipo de empresa */}
+          {empresaConfig?.usa_inventario && (
+            <>
+              <Link to="/" style={{...estilos.navLinks, color: empresaConfig?.color_principal || '#3b82f6', fontWeight: 'bold'}}>Catálogo</Link>
+              <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
+            </>
+          )}
+          {empresaConfig?.usa_citas && (
+            <>
+              <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>
+              <Link to="/mis-citas" style={estilos.navLinks}>Mis Citas</Link>
+            </>
+          )}
           
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
           
@@ -252,9 +267,9 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
           <div style={{ borderTop: `2px solid ${esTemaOscuro ? '#1e293b' : '#f1f5f9'}`, paddingTop: '30px', marginTop: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: '800', marginBottom: '24px' }}>
               <span>Total:</span>
-              <span style={{ color: esTemaOscuro ? '#34d399' : '#10b981' }}>${totalCarrito}</span>
+              <span style={{ color: empresaConfig?.color_principal || '#10b981' }}>${totalCarrito}</span>
             </div>
-            <button onClick={confirmarPedido} style={{ ...estilos.btnPrimary, background: '#10b981', padding: '16px', fontSize: '1.1rem' }}>Confirmar Pedido</button>
+            <button onClick={confirmarPedido} style={{ ...estilos.btnPrimary, background: empresaConfig?.color_principal || '#10b981', padding: '16px', fontSize: '1.1rem' }}>Confirmar Pedido</button>
           </div>
         )}
       </div>

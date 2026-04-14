@@ -1,21 +1,27 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Calendar, Package, Users, ShoppingBag, DollarSign, Shield } from 'lucide-react';
+import { Calendar, Package, Users, ShoppingBag, DollarSign, Shield, Settings } from 'lucide-react';
 
-function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, manejarClickCitas }) {
+function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, manejarClickCitas, empresaConfig }) {
+
   const ubicacion = useLocation();
 
   const menu = [
-    { nombre: 'Agenda', ruta: '/', icono: <Calendar size={20} />, notif: notifCitasAdmin, onClick: manejarClickCitas },
-    { nombre: 'Pedidos', ruta: '/pedidos', icono: <ShoppingBag size={20} />, notif: notificacionesAdmin, onClick: manejarClickPedidos },
-    { nombre: 'Inventario', ruta: '/inventario', icono: <Package size={20} /> },
-    { nombre: 'Clientes', ruta: '/clientes', icono: <Users size={20} /> },
-    { nombre: 'Ventas', ruta: '/ventas', icono: <DollarSign size={20} /> },
-    { nombre: 'Admins', ruta: '/admins', icono: <Shield size={20} /> }, 
-  ];
+    { nombre: 'Agenda', ruta: '/', icono: <Calendar size={20} />, notif: notifCitasAdmin, onClick: manejarClickCitas, mostrar: empresaConfig?.usa_citas },
+    { nombre: 'Pedidos', ruta: '/pedidos', icono: <ShoppingBag size={20} />, notif: notificacionesAdmin, onClick: manejarClickPedidos, mostrar: empresaConfig?.usa_inventario },
+    { nombre: 'Inventario', ruta: '/inventario', icono: <Package size={20} />, mostrar: empresaConfig?.usa_inventario },
+    { nombre: 'Clientes', ruta: '/clientes', icono: <Users size={20} />, mostrar: true },
+    { nombre: 'Ventas', ruta: '/ventas', icono: <DollarSign size={20} />, mostrar: empresaConfig?.usa_inventario },
+    { nombre: 'Admins', ruta: '/admins', icono: <Shield size={20} />, mostrar: true }, 
+    { nombre: 'Ajustes', ruta: '/ajustes', icono: <Settings size={20} />, mostrar: true },
+  ].filter(item => item.mostrar !== false);
 
   return (
     <div className="admin-sidebar" style={{ width: '250px', background: '#0f172a', minHeight: '100vh', padding: '20px 0', color: 'white', flexShrink: 0 }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '30px', fontSize: '24px', letterSpacing: '1px', color: '#38bdf8' }}>CRM ADMIN</h2>
+      <div style={{ textAlign: 'center', marginBottom: '30px', padding: '0 20px', minHeight: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {empresaConfig?.logo_url 
+          ? <img src={empresaConfig.logo_url} alt="Logo Empresa" style={{ maxHeight: '60px', maxWidth: '100%', objectFit: 'contain' }} />
+          : <h2 style={{ fontSize: '24px', letterSpacing: '1px', color: '#38bdf8', margin: 0 }}>CRM ADMIN</h2>}
+      </div>
       
       <div className="admin-menu" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {menu.map((item) => {

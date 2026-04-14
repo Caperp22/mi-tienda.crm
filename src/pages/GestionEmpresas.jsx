@@ -6,6 +6,13 @@ function GestionEmpresas() {
   const [empresas, setEmpresas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [nombre, setNombre] = useState('');
+  const [usaInventario, setUsaInventario] = useState(true);
+  const [usaCitas, setUsaCitas] = useState(true);
+  const [colorPrincipal, setColorPrincipal] = useState('#3b82f6');
+  const [logoFile, setLogoFile] = useState(null);
+
+  useEffect(() => {
+
 
   useEffect(() => {
     cargarEmpresas();

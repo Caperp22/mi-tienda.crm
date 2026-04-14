@@ -3,7 +3,7 @@ import { supabase } from '../config/supabase';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, User, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react'; 
 
-function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaNombre }) {
+function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaNombre, empresaConfig }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [citas, setCitas] = useState([]);
@@ -20,7 +20,7 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
     container: { minHeight: '100vh', color: esTemaOscuro ? '#f8fafc' : '#0f172a', transition: 'color 0.3s' },
     navbar: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, position: 'sticky', top: 0, zIndex: 100 },
     navLinks: { color: esTemaOscuro ? '#e2e8f0' : '#4b5563', textDecoration: 'none', fontWeight: '500', transition: 'color 0.2s' },
-    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
+    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: empresaConfig?.color_principal || '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
     card: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '25px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px', boxShadow: esTemaOscuro ? '0 4px 6px -1px rgba(0,0,0,0.5)' : '0 4px 6px -1px rgba(0,0,0,0.05)', marginBottom: '15px' },
     emptyState: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '40px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, textAlign: 'center', color: esTemaOscuro ? '#94a3b8' : '#64748b' }
   };
@@ -28,12 +28,26 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre || 'Mi Tienda'}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {empresaConfig?.logo_url ? (
+            <img src={empresaConfig.logo_url} alt={empresaNombre} style={{ height: '40px', objectFit: 'contain' }} />
+          ) : (
+            <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre || 'Mi Tienda'}</div>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
-          <Link to="/" style={estilos.navLinks}>Catálogo</Link>
-          <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>
-          <Link to="/mis-citas" style={{...estilos.navLinks, color: '#3b82f6', fontWeight: 'bold'}}>Mis Citas</Link>
-          <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
+          {empresaConfig?.usa_inventario && (
+            <>
+              <Link to="/" style={estilos.navLinks}>Catálogo</Link>
+              <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
+            </>
+          )}
+          {empresaConfig?.usa_citas && (
+            <>
+              <Link to="/agendar" style={estilos.navLinks}>Agendar Cita</Link>
+              <Link to="/mis-citas" style={{...estilos.navLinks, color: empresaConfig?.color_principal || '#3b82f6', fontWeight: 'bold'}}>Mis Citas</Link>
+            </>
+          )}
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
           <button onClick={() => setEsTemaOscuro(!esTemaOscuro)} style={{ background: 'none', border: 'none', color: estilos.navLinks.color, cursor: 'pointer', padding: 0 }}><Sun size={22} /></button>
           
@@ -84,7 +98,7 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
           
           {/* --- NUEVO BOTÓN DE PERFIL AQUÍ --- */}
-          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
+          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: empresaConfig?.color_principal || '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
             <User size={18} /><span>{usuario?.user_metadata?.nombre || 'Mi Perfil'}</span>
           </Link>
           

@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, User, Calendar, Clock, Sparkles } from 'lucide-react';
 
-function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre }) {
+function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre, empresaConfig }) {
   const navigate = useNavigate();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [fecha, setFecha] = useState('');
@@ -78,29 +78,43 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
     container: { minHeight: '100vh', color: esTemaOscuro ? '#f8fafc' : '#0f172a', transition: 'color 0.3s', overflowX: 'hidden' },
     navbar: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, position: 'sticky', top: 0, zIndex: 100 },
     navLinks: { color: esTemaOscuro ? '#e2e8f0' : '#4b5563', textDecoration: 'none', fontWeight: '500', transition: 'color 0.2s' },
-    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
+    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: empresaConfig?.color_principal || '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
     formCard: { background: esTemaOscuro ? '#1e293b' : 'white', maxWidth: '600px', margin: '40px auto', padding: '40px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, boxShadow: esTemaOscuro ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)' },
     label: { display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: esTemaOscuro ? '#cbd5e1' : '#475569' },
     input: { width: '100%', padding: '14px', borderRadius: '8px', border: `1px solid ${esTemaOscuro ? '#475569' : '#cbd5e1'}`, background: esTemaOscuro ? '#0f172a' : '#f8fafc', color: esTemaOscuro ? 'white' : 'black', fontSize: '15px', marginBottom: '20px', boxSizing: 'border-box', outline: 'none' },
     gridHoras: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '20px' },
     btnHora: (ocupada, seleccionada) => ({
       padding: '10px', borderRadius: '8px', fontWeight: 'bold', fontSize: '14px', cursor: ocupada ? 'not-allowed' : 'pointer',
-      background: seleccionada ? '#4f46e5' : ocupada ? (esTemaOscuro ? '#334155' : '#e2e8f0') : (esTemaOscuro ? '#0f172a' : 'white'),
+      background: seleccionada ? (empresaConfig?.color_principal || '#4f46e5') : ocupada ? (esTemaOscuro ? '#334155' : '#e2e8f0') : (esTemaOscuro ? '#0f172a' : 'white'),
       color: seleccionada ? 'white' : ocupada ? '#94a3b8' : (esTemaOscuro ? '#e2e8f0' : '#475569'),
-      border: `1px solid ${seleccionada ? '#4f46e5' : ocupada ? 'transparent' : (esTemaOscuro ? '#475569' : '#cbd5e1')}`, transition: 'all 0.2s'
+      border: `1px solid ${seleccionada ? (empresaConfig?.color_principal || '#4f46e5') : ocupada ? 'transparent' : (esTemaOscuro ? '#475569' : '#cbd5e1')}`, transition: 'all 0.2s'
     }),
-    btnPrimary: { width: '100%', padding: '16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }
+    btnPrimary: { width: '100%', padding: '16px', background: empresaConfig?.color_principal || '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }
   };
 
   return (
     <div style={estilos.container}>
       <nav style={estilos.navbar}>
-        <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {empresaConfig?.logo_url ? (
+            <img src={empresaConfig.logo_url} alt={empresaNombre} style={{ height: '40px', objectFit: 'contain' }} />
+          ) : (
+            <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre}</div>
+          )}
+        </div>
         <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
-          <Link to="/" style={estilos.navLinks}>Catálogo</Link>
-          <Link to="/agendar" style={{...estilos.navLinks, color: '#3b82f6', fontWeight: 'bold'}}>Agendar Cita</Link>
-          <Link to="/mis-citas" style={estilos.navLinks}>Mis Citas</Link>
-          <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
+          {empresaConfig?.usa_inventario && (
+            <>
+              <Link to="/" style={estilos.navLinks}>Catálogo</Link>
+              <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
+            </>
+          )}
+          {empresaConfig?.usa_citas && (
+            <>
+              <Link to="/agendar" style={{...estilos.navLinks, color: empresaConfig?.color_principal || '#3b82f6', fontWeight: 'bold'}}>Agendar Cita</Link>
+              <Link to="/mis-citas" style={estilos.navLinks}>Mis Citas</Link>
+            </>
+          )}
           
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
           <button onClick={() => setEsTemaOscuro(!esTemaOscuro)} style={{ background: 'none', border: 'none', color: estilos.navLinks.color, cursor: 'pointer', padding: 0 }}><Sun size={22} /></button>
@@ -152,7 +166,7 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
           <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
           
           {/* --- NUEVO BOTÓN DE PERFIL AQUÍ --- */}
-          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
+          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: empresaConfig?.color_principal || '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
             <User size={18} /><span>{usuario?.user_metadata?.nombre || 'Mi Perfil'}</span>
           </Link>
           
@@ -162,7 +176,7 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
 
       <div style={estilos.formCard}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <Sparkles size={40} color="#4f46e5" style={{ marginBottom: '10px' }} />
+          <Sparkles size={40} color={empresaConfig?.color_principal || "#4f46e5"} style={{ marginBottom: '10px' }} />
           <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '800' }}>Reserva tu Cita</h1>
           <p style={{ color: esTemaOscuro ? '#94a3b8' : '#64748b', marginTop: '10px' }}>Selecciona el servicio y el horario de tu preferencia.</p>
         </div>
