@@ -6,7 +6,7 @@ import {
   Trash2, Zap, Star, Crown, Package, ShoppingBag, Users, DollarSign,
   BarChart2, Shield, Briefcase, Edit3, X, Save, Mail, KeyRound,
   Truck, Tag, Monitor, UserCheck, Gift, FileText, Copy, Check,
-  ChevronDown, ChevronUp, Sun, Moon, Lock, Search, Filter,
+  ChevronDown, ChevronUp, Lock, Search, Filter,
   Power, ChevronRight,
 } from 'lucide-react';
 import {
@@ -176,8 +176,7 @@ function ModulosGrid({ modulos, plan, onToggle, t }) {
 /* ════════════════════════════════════════════════════════════════════════
    COMPONENTE PRINCIPAL
 ════════════════════════════════════════════════════════════════════════ */
-function GestionEmpresas() {
-  const [dark, setDark] = useState(() => localStorage.getItem('ge_dark') === 'true');
+function GestionEmpresas({ dark = false }) {
   const t = dark ? DARK : LIGHT;
 
   const [empresas, setEmpresas] = useState([]);
@@ -213,8 +212,7 @@ function GestionEmpresas() {
     setCargando(false);
   }, []);
 
-  useEffect(() => { localStorage.setItem('ge_dark', dark); }, [dark]);
-  useEffect(() => { cargar(); }, [cargar]);
+useEffect(() => { cargar(); }, [cargar]);
 
   function cambiarPlan(p) { setPlan(p); setModulos(getModulosPorDefecto(p)); }
   function toggleMod(id) { if (!MODULOS_POR_PLAN[plan]?.includes(id)) return; setModulos(prev => ({ ...prev, [id]: !prev[id] })); }
@@ -345,18 +343,6 @@ function GestionEmpresas() {
             ))}
           </div>
 
-          {/* Toggle dark/light */}
-          <button
-            onClick={() => setDark(d => !d)}
-            title={dark ? 'Modo claro' : 'Modo oscuro'}
-            style={{
-              width: '40px', height: '40px', borderRadius: '10px', border: `1px solid ${t.border}`,
-              background: t.card, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: dark ? '#fbbf24' : '#64748b', transition: 'all 0.2s',
-            }}
-          >
-            {dark ? <Sun size={17} /> : <Moon size={17} />}
-          </button>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon, Sun, Moon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 
@@ -420,6 +420,13 @@ function App() {
                 </button>
               )}
               <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>{new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              <button
+                onClick={() => setEsTemaOscuro(d => !d)}
+                title={esTemaOscuro ? 'Modo claro' : 'Modo oscuro'}
+                style={{ width: '34px', height: '34px', borderRadius: '8px', border: '1px solid #e2e8f0', background: esTemaOscuro ? '#1e293b' : '#f8fafc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: esTemaOscuro ? '#fbbf24' : '#64748b', transition: 'all 0.2s' }}
+              >
+                {esTemaOscuro ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
             </div>
           </div>
           
@@ -517,7 +524,7 @@ function App() {
                 </div>
               </div>
             )}
-            {vistaSuperAdmin === 'empresas' && <GestionEmpresas />}
+            {vistaSuperAdmin === 'empresas' && <GestionEmpresas dark={esTemaOscuro} />}
             {vistaSuperAdmin === 'admins' && <GestionAdminsGlobal />}
             {vistaSuperAdmin === 'clientes' && <GestionClientesGlobal />}
             {vistaSuperAdmin === 'solicitudes' && <VistasSolicitudesUpgrade />}
