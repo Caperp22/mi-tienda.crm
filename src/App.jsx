@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, DollarSign } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 
 import { supabase } from './config/supabase';
@@ -118,6 +119,10 @@ function App() {
   const [refreshCitas, setRefreshCitas] = useState(0);               
   const [vistaSuperAdmin, setVistaSuperAdmin] = useState('empresas');
 
+  // --- NUEVO ESTADO PARA GRÁFICA GLOBAL (SUPERADMIN) ---
+  const [datosGlobales, setDatosGlobales] = useState([]);
+  const [ingresosGlobales, setIngresosGlobales] = useState(0);
+
   const manejarClickPedidos = () => { setNotificacionesAdmin(0); setRefreshPedidos(prev => prev + 1); };
   const manejarClickCitas = () => { setNotifCitasAdmin(0); setRefreshCitas(prev => prev + 1); };
 
@@ -172,6 +177,36 @@ function App() {
     }
   }, [usuario, rol, empresaId]); 
 
+  // --- NUEVO EFFECT PARA ESTADÍSTICAS DEL SUPERADMIN ---
+  useEffect(() => {
+    if (rol === 'superadmin') {
+      async function obtenerEstadisticasGlobales() {
+        const { data } = await supabase.from('pedidos').select('total, created_at').eq('estado', 'Entregado');
+        if (data) {
+          const ventasPorFecha = {};
+          let sumaTotal = 0;
+          data.forEach(p => {
+            sumaTotal += Number(p.total);
+            const fechaBase = new Date(p.created_at);
+            const key = fechaBase.toISOString().split('T')[0];
+            ventasPorFecha[key] = (ventasPorFecha[key] || 0) + Number(p.total);
+          });
+          
+          const grafica = Object.keys(ventasPorFecha).sort().map(key => {
+            const dateObj = new Date(key + "T00:00:00");
+            return {
+              fecha: dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+              ventas: ventasPorFecha[key]
+            };
+          });
+          setDatosGlobales(grafica);
+          setIngresosGlobales(sumaTotal);
+        }
+      }
+      obtenerEstadisticasGlobales();
+    }
+  }, [rol]);
+
   async function cerrarSesion() { await supabase.auth.signOut(); }
 
   if (cargando) return <div style={{ textAlign: 'center', padding: '50px' }}>Cargando sistema...</div>;
@@ -219,6 +254,16 @@ function App() {
                 <p style={{ color: '#64748b', marginBottom: '40px' }}>Visión general de todas las empresas operando en tu plataforma.</p>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                  {/* TARJETA NUEVA: INGRESOS GLOBALES */}
+                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#dcfce3', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                      <DollarSign size={24} />
+                    </div>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Ingresos de la Red</h3>
+                    <p style={{ margin: 0, color: '#10b981', fontSize: '24px', fontWeight: '900' }}>${ingresosGlobales.toLocaleString()}</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Total procesado por todas las tiendas.</p>
+                  </div>
+
                   <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                     <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#e0f2fe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
                       <Building2 size={24} />
@@ -234,6 +279,31 @@ function App() {
                     <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Cuentas de Acceso</h3>
                     <p style={{ margin: 0, color: '#64748b', fontSize: '14px', lineHeight: '1.5' }}>Enlaza los correos electrónicos de los dueños de negocios a sus respectivas empresas para que puedan operar de forma aislada.</p>
                   </div>
+                </div>
+
+                {/* GRÁFICA GLOBAL */}
+                <div style={{ marginTop: '30px', background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
+                  <h2 style={{ fontSize: '20px', color: '#1e293b', margin: '0 0 20px 0' }}>Volumen de Ventas de la Red (Todas las Tiendas)</h2>
+                  
+                  {datosGlobales.length === 0 ? (
+                    <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0' }}>Aún no hay pedidos entregados para generar la gráfica.</p>
+                  ) : (
+                    <div style={{ width: '100%', height: '350px' }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={datosGlobales} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                          <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(val) => `$${val}`} dx={-5} />
+                          <Tooltip 
+                            cursor={{ fill: '#f8fafc' }}
+                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontWeight: 'bold', color: '#1e293b' }}
+                            formatter={(value) => [`$${value}`, 'Ingresos Globales']}
+                          />
+                          <Bar dataKey="ventas" fill="#10b981" radius={[6, 6, 0, 0]} barSize={40} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
