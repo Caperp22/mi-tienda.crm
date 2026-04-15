@@ -278,10 +278,28 @@ function GestionEmpresas() {
   }
 
   async function eliminar(id, n) {
-    const { isConfirmed } = await Swal.fire({ title: `¿Eliminar "${n}"?`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' });
+    const { isConfirmed } = await Swal.fire({
+      title: `¿Eliminar "${n}"?`,
+      html: `<p style="color:#64748b;font-size:13px">Esta acción es <b>irreversible</b>. Se eliminará la empresa y todos sus datos asociados.</p>`,
+      icon: 'warning', showCancelButton: true,
+      confirmButtonColor: '#ef4444', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
+    });
     if (!isConfirmed) return;
-    await supabase.from('empresas').delete().eq('id', id);
+    // Primero eliminar el admin relacionado para evitar FK constraint
+    await supabase.from('administradores').delete().eq('empresa_id', id);
+    const { error } = await supabase.from('empresas').delete().eq('id', id);
+    if (error) {
+      Swal.fire('No se pudo eliminar', `La empresa tiene datos relacionados que impiden su eliminación.\n\nError: ${error.message}\n\nTip: desactívala si no quieres que opere, o elimina primero sus pedidos y clientes desde las vistas globales.`, 'error');
+      return;
+    }
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `"${n}" eliminada`, showConfirmButton: false, timer: 2500 });
     cargar();
+  }
+
+  async function copiarAcceso(emp) {
+    const texto = `Empresa: ${emp.nombre}\nEmail: ${emp.email_admin}\nLicencia: ${emp.licencia}\nAcceso: ${window.location.origin}`;
+    await navigator.clipboard.writeText(texto);
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Credenciales copiadas', showConfirmButton: false, timer: 1800 });
   }
 
   const emp_filtradas = empresas.filter(e =>
@@ -469,7 +487,7 @@ function GestionEmpresas() {
                 </div>
                 <div style={{ background: dark ? '#fbbf2414' : '#fffbeb', border: `1px solid ${dark ? '#fbbf2430' : '#fde68a'}`, borderRadius: '8px', padding: '10px 14px', display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <KeyRound size={14} color="#d97706" />
-                  <p style={{ margin: 0, fontSize: '11px', color: dark ? '#fbbf24' : '#92400e' }}>Se generará una <b>licencia única</b> y se enviará un <b>magic link</b> al correo del administrador.</p>
+                  <p style={{ margin: 0, fontSize: '11px', color: dark ? '#fbbf24' : '#92400e' }}>Se generará una <b>licencia única</b> — el administrador accede con su correo y la licencia como contraseña. <b>Guarda la licencia</b> para entregársela.</p>
                 </div>
               </div>
             )}
@@ -568,7 +586,7 @@ function GestionEmpresas() {
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ background: dark ? 'rgba(255,255,255,0.03)' : '#f8fafc' }}>
-                      {['Empresa', 'Plan', 'Módulos', 'Estado', 'Acciones'].map(h => (
+                      {['Empresa', 'Plan', 'Módulos', 'Estado', 'Creación', 'Acciones'].map(h => (
                         <th key={h} style={{ padding: '9px 14px', fontSize: '9.5px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '0.7px', borderBottom: `1px solid ${t.border}`, textAlign: h === 'Acciones' ? 'center' : 'left' }}>{h}</th>
                       ))}
                     </tr>
@@ -633,16 +651,30 @@ function GestionEmpresas() {
                           </td>
 
                           <td style={{ padding: '10px 14px' }}>
+                            <p style={{ margin: 0, fontSize: '10px', color: t.muted }}>
+                              {emp.created_at ? new Date(emp.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                            </p>
+                          </td>
+
+                          <td style={{ padding: '10px 14px' }}>
                             <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
                               <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); }}
+                                title="Configurar módulos y plan"
                                 style={{ padding: '5px 10px', background: '#3b82f618', color: '#60a5fa', border: '1px solid #3b82f630', borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Edit3 size={11} />Configurar
                               </button>
+                              <button onClick={() => copiarAcceso(emp)}
+                                title="Copiar credenciales de acceso"
+                                style={{ padding: '5px 8px', background: '#a78bfa18', color: '#a78bfa', border: '1px solid #a78bfa30', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: '700' }}>
+                                <Copy size={11} />Acceso
+                              </button>
                               <button onClick={() => toggleEstado(emp.id, emp.estado)}
+                                title={emp.estado === 'activa' ? 'Pausar empresa' : 'Reactivar empresa'}
                                 style={{ padding: '5px 8px', background: emp.estado === 'activa' ? '#fbbf2418' : '#00d68f18', color: emp.estado === 'activa' ? '#fbbf24' : '#00d68f', border: `1px solid ${emp.estado === 'activa' ? '#fbbf2430' : '#00d68f30'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Power size={11} />{emp.estado === 'activa' ? 'Pausar' : 'Activar'}
                               </button>
                               <button onClick={() => eliminar(emp.id, emp.nombre)}
+                                title="Eliminar empresa"
                                 style={{ padding: '5px 7px', background: '#ef444418', color: '#f87171', border: '1px solid #ef444430', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                                 <Trash2 size={12} />
                               </button>

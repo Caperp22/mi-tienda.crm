@@ -343,39 +343,84 @@ function App() {
   if (rol === 'superadmin') {
     return (
       <div className="superadmin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
-        {/* Sidebar SuperAdmin */}
-        <div style={{ width: '260px', background: '#0f172a', color: 'white', minHeight: '100vh', padding: '20px 0', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '0 20px', marginBottom: '40px', textAlign: 'center', marginTop: '10px' }}>
-            <h2 style={{ color: '#38bdf8', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>SúperAdmin</h2>
-            <p style={{ color: '#94a3b8', fontSize: '13px', margin: '5px 0 0 0' }}>Panel de Control SaaS</p>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            {[
-              { id: 'dashboard', icono: <LayoutDashboard size={20} />, label: 'Dashboard Global' },
-              { id: 'empresas',  icono: <Building2 size={20} />,      label: 'Empresas (Inquilinos)' },
-              { id: 'admins',    icono: <Users size={20} />,           label: 'Cuentas de Admins' },
-              { id: 'clientes',  icono: <Users size={20} />,           label: 'Clientes Globales' },
-              { id: 'solicitudes', icono: <TrendingUp size={20} />,   label: 'Solicitudes Upgrade', badge: notifUpgrades },
-            ].map(({ id, icono, label, badge }) => (
-              <div key={id} onClick={() => { setVistaSuperAdmin(id); if (id === 'solicitudes') setNotifUpgrades(0); }} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === id ? 'white' : '#94a3b8', background: vistaSuperAdmin === id ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === id ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s', position: 'relative' }}>
-                {icono}
-                <span style={{ fontWeight: vistaSuperAdmin === id ? 'bold' : 'normal' }}>{label}</span>
-                {badge > 0 && <span style={{ position: 'absolute', right: '18px', background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', fontWeight: 'bold' }}>{badge}</span>}
-              </div>
-            ))}
+        {/* ── Sidebar SuperAdmin ─────────────────────────────────── */}
+        <div style={{ width: '240px', background: 'linear-gradient(180deg,#060d1a 0%,#0f172a 100%)', color: 'white', minHeight: '100vh', flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Header */}
+          <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '13px', background: 'linear-gradient(135deg,#38bdf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', boxShadow: '0 0 20px #38bdf840' }}>
+              <Crown size={22} color="white" />
+            </div>
+            <p style={{ margin: '0 0 2px', fontSize: '14px', fontWeight: '800', color: '#f1f5f9', letterSpacing: '0.3px' }}>SuperAdmin</p>
+            <p style={{ margin: 0, fontSize: '10px', color: '#475569' }}>Panel de Control SaaS</p>
           </div>
 
-          <div style={{ marginTop: 'auto', padding: '20px', width: '260px', boxSizing: 'border-box' }}>
-             <button onClick={cerrarSesion} style={{ width: '100%', padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
-               <LogOut size={18} /> Cerrar Sesión
-             </button>
+          {/* Nav */}
+          <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto' }}>
+            {[
+              { grupo: 'Principal',   items: [
+                { id: 'dashboard',   icono: <LayoutDashboard size={15} />, label: 'Dashboard' },
+                { id: 'empresas',    icono: <Building2 size={15} />,       label: 'Empresas' },
+              ]},
+              { grupo: 'Usuarios',   items: [
+                { id: 'admins',      icono: <Users size={15} />,           label: 'Administradores' },
+                { id: 'clientes',    icono: <Activity size={15} />,        label: 'Clientes Globales' },
+              ]},
+              { grupo: 'Gestión',    items: [
+                { id: 'solicitudes', icono: <TrendingUp size={15} />,      label: 'Upgrades', badge: notifUpgrades },
+              ]},
+            ].map(({ grupo, items }) => (
+              <div key={grupo} style={{ marginBottom: '4px' }}>
+                <p style={{ fontSize: '9px', fontWeight: '700', color: '#334155', textTransform: 'uppercase', letterSpacing: '1.2px', margin: '0', padding: '8px 20px 4px', opacity: 0.9 }}>{grupo}</p>
+                {items.map(({ id, icono, label, badge }) => {
+                  const activo = vistaSuperAdmin === id;
+                  return (
+                    <div key={id}
+                      onClick={() => { setVistaSuperAdmin(id); if (id === 'solicitudes') setNotifUpgrades(0); }}
+                      style={{ padding: '8px 18px 8px 20px', margin: '1px 10px', borderRadius: '9px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', color: activo ? 'white' : '#94a3b8', background: activo ? 'rgba(56,189,248,0.12)' : 'transparent', borderLeft: activo ? '3px solid #38bdf8' : '3px solid transparent', transition: 'all 0.15s', position: 'relative' }}
+                      onMouseEnter={e => { if (!activo) { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#e2e8f0'; }}}
+                      onMouseLeave={e => { if (!activo) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#94a3b8'; }}}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: activo ? 'rgba(56,189,248,0.2)' : 'rgba(255,255,255,0.05)', flexShrink: 0 }}>
+                        {icono}
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: activo ? '600' : '400', flex: 1 }}>{label}</span>
+                      {badge > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '10px', padding: '1px 7px', fontSize: '10px', fontWeight: '700' }}>{badge}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </nav>
+
+          {/* Footer */}
+          <div style={{ padding: '12px 16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ background: 'rgba(56,189,248,0.08)', border: '1px solid rgba(56,189,248,0.15)', borderRadius: '9px', padding: '8px 12px', marginBottom: '10px' }}>
+              <p style={{ margin: 0, fontSize: '10px', color: '#94a3b8' }}>Sesión activa</p>
+              <p style={{ margin: 0, fontSize: '11px', color: '#38bdf8', fontWeight: '600', wordBreak: 'break-all' }}>{usuario.email}</p>
+            </div>
+            <button onClick={cerrarSesion} style={{ width: '100%', padding: '9px 14px', background: 'rgba(239,68,68,0.1)', color: '#fca5a5', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '9px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: '600' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.2)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.1)'}>
+              <LogOut size={14} /> Cerrar Sesión
+            </button>
           </div>
         </div>
 
         <div style={{ flex: 1, background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ background: 'white', padding: '15px 40px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
-             <span style={{ fontWeight: 'bold', color: '#64748b' }}>Sesión activa: {usuario.email}</span>
+          {/* Topbar */}
+          <div style={{ background: 'white', padding: '12px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
+              <span style={{ fontSize: '12px', color: '#64748b' }}>Sistema operativo</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {notifUpgrades > 0 && (
+                <button onClick={() => { setVistaSuperAdmin('solicitudes'); setNotifUpgrades(0); }}
+                  style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <TrendingUp size={13} /> {notifUpgrades} solicitud{notifUpgrades > 1 ? 'es' : ''} de upgrade
+                </button>
+              )}
+              <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>{new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+            </div>
           </div>
           
           <div style={{ padding: '40px', flex: 1, overflowY: 'auto' }}>
