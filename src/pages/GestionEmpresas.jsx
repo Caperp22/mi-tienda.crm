@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Building2, Plus, Power, Store, Calendar, Palette, Image as ImageIcon, Clock, CheckCircle } from 'lucide-react';
+import { Building2, Plus, Power, Store, Calendar, Palette, Image as ImageIcon, Clock, CheckCircle, Trash2 } from 'lucide-react';
 
 function GestionEmpresas() {
   const [empresas, setEmpresas] = useState([]);
@@ -106,6 +106,31 @@ function GestionEmpresas() {
       cargarEmpresas();
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
+    }
+  }
+
+  async function eliminarEmpresa(id, nombreEmpresa) {
+    const confirmacion = await Swal.fire({
+      title: '¿Eliminar empresa?',
+      text: `Estás a punto de eliminar "${nombreEmpresa}". ¡Esta acción borrará la empresa y no se puede deshacer!`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (confirmacion.isConfirmed) {
+      try {
+        const { error } = await supabase.from('empresas').delete().eq('id', id);
+        if (error) throw error;
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Empresa eliminada', showConfirmButton: false, timer: 3000 });
+        cargarEmpresas();
+      } catch (error) {
+        console.error('Error al eliminar empresa:', error);
+        Swal.fire('Error', 'No se pudo eliminar la empresa. Es posible que tenga datos (productos o citas) vinculados.', 'error');
+      }
     }
   }
 
@@ -248,12 +273,21 @@ function GestionEmpresas() {
                       </span>
                     </td>
                     <td style={{ padding: '12px 15px', textAlign: 'center' }}>
-                      <button 
-                        onClick={() => cambiarEstado(emp.id, emp.estado)}
-                        style={{ padding: '6px 10px', background: emp.estado === 'activa' ? '#fffbeb' : '#ecfdf5', color: emp.estado === 'activa' ? '#d97706' : '#059669', border: `1px solid ${emp.estado === 'activa' ? '#fde68a' : '#a7f3d0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', margin: '0 auto', transition: 'all 0.2s' }}
-                      >
-                        <Power size={14} /> {emp.estado === 'activa' ? 'Suspender' : 'Activar'}
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+                        <button 
+                          onClick={() => cambiarEstado(emp.id, emp.estado)}
+                          style={{ padding: '6px 10px', background: emp.estado === 'activa' ? '#fffbeb' : '#ecfdf5', color: emp.estado === 'activa' ? '#d97706' : '#059669', border: `1px solid ${emp.estado === 'activa' ? '#fde68a' : '#a7f3d0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', transition: 'all 0.2s' }}
+                        >
+                          <Power size={14} /> {emp.estado === 'activa' ? 'Suspender' : 'Activar'}
+                        </button>
+                        <button 
+                          onClick={() => eliminarEmpresa(emp.id, emp.nombre)}
+                          style={{ padding: '6px 10px', background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}
+                          title="Eliminar Empresa"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
