@@ -16,12 +16,23 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
     { nombre: 'Ajustes', ruta: '/ajustes', icono: <Settings size={20} />, mostrar: true },
   ].filter(item => item.mostrar !== false);
 
+  const colorPlan = empresaConfig?.plan === 'advance' ? '#fbbf24' : empresaConfig?.plan === 'pro' ? '#38bdf8' : '#94a3b8';
+  const bgPlan = empresaConfig?.plan === 'advance' ? 'rgba(251, 191, 36, 0.15)' : empresaConfig?.plan === 'pro' ? 'rgba(56, 189, 248, 0.15)' : 'rgba(148, 163, 184, 0.15)';
+
   return (
     <div className="admin-sidebar" style={{ width: '250px', background: '#0f172a', minHeight: '100vh', padding: '20px 0', color: 'white', flexShrink: 0 }}>
-      <div style={{ textAlign: 'center', marginBottom: '30px', padding: '0 20px', minHeight: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        {empresaConfig?.logo_url 
-          ? <img src={empresaConfig.logo_url} alt="Logo Empresa" style={{ maxHeight: '60px', maxWidth: '100%', objectFit: 'contain' }} />
-          : <h2 style={{ fontSize: '24px', letterSpacing: '1px', color: '#38bdf8', margin: 0 }}>CRM ADMIN</h2>}
+      <div style={{ textAlign: 'center', marginBottom: '30px', padding: '0 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ minHeight: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '10px' }}>
+          {empresaConfig?.logo_url 
+            ? <img src={empresaConfig.logo_url} alt="Logo Empresa" style={{ maxHeight: '60px', maxWidth: '100%', objectFit: 'contain' }} />
+            : <h2 style={{ fontSize: '24px', letterSpacing: '1px', color: '#38bdf8', margin: 0 }}>CRM ADMIN</h2>}
+        </div>
+        
+        {empresaConfig?.plan && (
+          <div style={{ background: bgPlan, color: colorPlan, border: `1px solid ${colorPlan}`, padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            PLAN {empresaConfig.plan}
+          </div>
+        )}
       </div>
       
       <div className="admin-menu" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
