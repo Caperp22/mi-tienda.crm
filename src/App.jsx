@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 
@@ -107,6 +107,95 @@ function useAuth() {
   return { usuario, rol, empresaId, empresaNombre, empresaConfig, cargando };
 }
 
+// ─── Vista de Solicitudes de Upgrade (SuperAdmin) ────────────────────────────
+function VistasSolicitudesUpgrade() {
+  const [solicitudes, setSolicitudes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+
+  useEffect(() => {
+    async function cargar() {
+      const { data } = await supabase
+        .from('solicitudes_upgrade')
+        .select('*, empresas(nombre, email_admin)')
+        .order('created_at', { ascending: false });
+      setSolicitudes(data || []);
+      setCargando(false);
+    }
+    cargar();
+  }, []);
+
+  async function responder(id, empresaId, planSolicitado, accion) {
+    if (accion === 'aprobar') {
+      const { error } = await supabase.from('empresas').update({
+        plan: planSolicitado,
+        modulos: (await import('./config/modulos')).getModulosPorDefecto(planSolicitado),
+        usa_inventario: ['básico','pro','advance'].includes(planSolicitado),
+        usa_citas: ['pro','advance'].includes(planSolicitado),
+      }).eq('id', empresaId);
+      if (error) { Swal.fire('Error', error.message, 'error'); return; }
+    }
+    await supabase.from('solicitudes_upgrade').update({ estado: accion === 'aprobar' ? 'aprobada' : 'rechazada' }).eq('id', id);
+    Swal.fire({ toast: true, position: 'top-end', icon: accion === 'aprobar' ? 'success' : 'info', title: accion === 'aprobar' ? '¡Plan actualizado!' : 'Solicitud rechazada', showConfirmButton: false, timer: 3000 });
+    setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, estado: accion === 'aprobar' ? 'aprobada' : 'rechazada' } : s));
+  }
+
+  if (cargando) return <p style={{ color: '#64748b' }}>Cargando solicitudes...</p>;
+
+  return (
+    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+        <TrendingUp size={30} color="#3b82f6" />
+        <h1 style={{ fontSize: '26px', color: '#1e293b', margin: 0, fontWeight: '800' }}>Solicitudes de Upgrade</h1>
+      </div>
+      <p style={{ color: '#64748b', marginBottom: '30px' }}>Empresas que solicitan cambiar su plan de suscripción.</p>
+
+      {solicitudes.length === 0 ? (
+        <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '60px', textAlign: 'center' }}>
+          <TrendingUp size={40} color="#e2e8f0" style={{ marginBottom: '15px' }} />
+          <p style={{ color: '#94a3b8', fontSize: '16px', margin: 0 }}>No hay solicitudes pendientes.</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {solicitudes.map(sol => (
+            <div key={sol.id} style={{ background: 'white', borderRadius: '12px', border: `1px solid ${sol.estado === 'pendiente' ? '#fde68a' : sol.estado === 'aprobada' ? '#a7f3d0' : '#fecaca'}`, padding: '20px 25px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: '#1e293b', fontSize: '15px' }}>{sol.empresas?.nombre || 'Empresa'}</p>
+                <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b' }}>{sol.empresas?.email_admin}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
+                    {sol.plan_actual?.toUpperCase()}
+                  </span>
+                  <span style={{ color: '#94a3b8', fontSize: '16px' }}>→</span>
+                  <span style={{ background: '#eff6ff', color: '#2563eb', padding: '2px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
+                    {sol.plan_solicitado?.toUpperCase()}
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(sol.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                {sol.estado === 'pendiente' ? (
+                  <>
+                    <button onClick={() => responder(sol.id, sol.empresa_id, sol.plan_solicitado, 'aprobar')} style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Check size={15} /> Aprobar
+                    </button>
+                    <button onClick={() => responder(sol.id, sol.empresa_id, sol.plan_solicitado, 'rechazar')} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <XIcon size={15} /> Rechazar
+                    </button>
+                  </>
+                ) : (
+                  <span style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', background: sol.estado === 'aprobada' ? '#dcfce3' : '#fee2e2', color: sol.estado === 'aprobada' ? '#166534' : '#991b1b' }}>
+                    {sol.estado === 'aprobada' ? '✓ Aprobada' : '✗ Rechazada'}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function App() {
   const { usuario, rol, empresaId, empresaNombre, empresaConfig, cargando } = useAuth();
   
@@ -121,6 +210,7 @@ function App() {
   const [refreshPedidos, setRefreshPedidos] = useState(0);
   const [refreshCitas, setRefreshCitas] = useState(0);               
   const [vistaSuperAdmin, setVistaSuperAdmin] = useState('empresas');
+  const [notifUpgrades, setNotifUpgrades] = useState(0);
 
   // --- NUEVO ESTADO PARA GRÁFICA GLOBAL (SUPERADMIN) ---
   const [datosGlobales, setDatosGlobales] = useState([]);
@@ -181,8 +271,22 @@ function App() {
         }).subscribe();
 
       return () => { supabase.removeChannel(suscripcionClientePedidos); supabase.removeChannel(suscripcionClienteCitas); };
+    } else if (rol === 'superadmin') {
+      // Cargar solicitudes de upgrade pendientes al inicio
+      supabase.from('solicitudes_upgrade').select('*', { count: 'exact', head: true }).eq('estado', 'pendiente')
+        .then(({ count }) => setNotifUpgrades(count || 0));
+
+      // Escuchar nuevas solicitudes en tiempo real
+      const suscripcionUpgrades = supabase
+        .channel('superadmin-upgrades')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'solicitudes_upgrade' }, (payload) => {
+          setNotifUpgrades(prev => prev + 1);
+          Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 5000, icon: 'info', title: `📈 Solicitud de upgrade: Plan ${payload.new.plan_solicitado?.toUpperCase()}` });
+        }).subscribe();
+
+      return () => { supabase.removeChannel(suscripcionUpgrades); };
     }
-  }, [usuario, rol, empresaId]); 
+  }, [usuario, rol, empresaId]);
 
   // --- NUEVO EFFECT PARA ESTADÍSTICAS DEL SUPERADMIN ---
   useEffect(() => {
@@ -247,18 +351,19 @@ function App() {
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <div onClick={() => setVistaSuperAdmin('dashboard')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'dashboard' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'dashboard' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'dashboard' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
-              <LayoutDashboard size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'dashboard' ? 'bold' : 'normal' }}>Dashboard Global</span>
-            </div>
-            <div onClick={() => setVistaSuperAdmin('empresas')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'empresas' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'empresas' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'empresas' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
-              <Building2 size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'empresas' ? 'bold' : 'normal' }}>Empresas (Inquilinos)</span>
-            </div>
-            <div onClick={() => setVistaSuperAdmin('admins')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'admins' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'admins' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'admins' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
-              <Users size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'admins' ? 'bold' : 'normal' }}>Cuentas de Admins</span>
-            </div>
-            <div onClick={() => setVistaSuperAdmin('clientes')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'clientes' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'clientes' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'clientes' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
-              <Users size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'clientes' ? 'bold' : 'normal' }}>Clientes Globales</span>
-            </div>
+            {[
+              { id: 'dashboard', icono: <LayoutDashboard size={20} />, label: 'Dashboard Global' },
+              { id: 'empresas',  icono: <Building2 size={20} />,      label: 'Empresas (Inquilinos)' },
+              { id: 'admins',    icono: <Users size={20} />,           label: 'Cuentas de Admins' },
+              { id: 'clientes',  icono: <Users size={20} />,           label: 'Clientes Globales' },
+              { id: 'solicitudes', icono: <TrendingUp size={20} />,   label: 'Solicitudes Upgrade', badge: notifUpgrades },
+            ].map(({ id, icono, label, badge }) => (
+              <div key={id} onClick={() => { setVistaSuperAdmin(id); if (id === 'solicitudes') setNotifUpgrades(0); }} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === id ? 'white' : '#94a3b8', background: vistaSuperAdmin === id ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === id ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s', position: 'relative' }}>
+                {icono}
+                <span style={{ fontWeight: vistaSuperAdmin === id ? 'bold' : 'normal' }}>{label}</span>
+                {badge > 0 && <span style={{ position: 'absolute', right: '18px', background: '#ef4444', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', fontWeight: 'bold' }}>{badge}</span>}
+              </div>
+            ))}
           </div>
 
           <div style={{ marginTop: 'auto', padding: '20px', width: '260px', boxSizing: 'border-box' }}>
@@ -370,6 +475,7 @@ function App() {
             {vistaSuperAdmin === 'empresas' && <GestionEmpresas />}
             {vistaSuperAdmin === 'admins' && <GestionAdminsGlobal />}
             {vistaSuperAdmin === 'clientes' && <GestionClientesGlobal />}
+            {vistaSuperAdmin === 'solicitudes' && <VistasSolicitudesUpgrade />}
           </div>
         </div>
       </div>

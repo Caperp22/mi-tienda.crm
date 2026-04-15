@@ -1,23 +1,21 @@
 /**
- * SISTEMA DE MÓDULOS - Configuración central del SaaS
- *
- * Aquí defines todos los módulos disponibles en la plataforma,
- * qué planes los incluyen, y los metadatos para la UI.
+ * SISTEMA DE MÓDULOS — Configuración central del SaaS
  *
  * Para agregar un nuevo módulo:
- *   1. Agrega la entrada en MODULOS_DISPONIBLES
+ *   1. Agrégalo en MODULOS_DISPONIBLES
  *   2. Agrégalo al plan correspondiente en MODULOS_POR_PLAN
- *   3. Crea la ruta y el componente en App.jsx
+ *   3. Crea la ruta y componente en App.jsx
  *   4. El Sidebar lo detecta automáticamente
  */
 
 export const MODULOS_DISPONIBLES = [
+  // ─── VENTAS ────────────────────────────────────────────────
   {
     id: 'tienda',
     nombre: 'Tienda / Catálogo',
     descripcion: 'Catálogo de productos y compras en línea para los clientes finales.',
     icono: 'Store',
-    ruta: '/tienda',
+    ruta: '/tienda-admin',
     categoria: 'Ventas',
   },
   {
@@ -30,20 +28,37 @@ export const MODULOS_DISPONIBLES = [
   },
   {
     id: 'pedidos',
-    nombre: 'Pedidos / Domicilios',
-    descripcion: 'Gestión de órdenes de compra y entregas a domicilio.',
+    nombre: 'Pedidos',
+    descripcion: 'Gestión de órdenes de compra y su estado de entrega.',
     icono: 'ShoppingBag',
     ruta: '/pedidos',
     categoria: 'Ventas',
   },
   {
-    id: 'clientes',
-    nombre: 'Clientes',
-    descripcion: 'Base de datos de clientes, historial y gestión de contactos.',
-    icono: 'Users',
-    ruta: '/clientes',
-    categoria: 'Gestión',
+    id: 'domicilios',
+    nombre: 'Domicilios',
+    descripcion: 'Zonas de entrega, costos de envío y seguimiento de domicilios.',
+    icono: 'Truck',
+    ruta: '/domicilios',
+    categoria: 'Ventas',
   },
+  {
+    id: 'cupones',
+    nombre: 'Cupones / Descuentos',
+    descripcion: 'Códigos promocionales, descuentos por porcentaje o valor fijo.',
+    icono: 'Tag',
+    ruta: '/cupones',
+    categoria: 'Ventas',
+  },
+  {
+    id: 'pos',
+    nombre: 'Punto de Venta (POS)',
+    descripcion: 'Caja rápida para registro de ventas presenciales.',
+    icono: 'Monitor',
+    ruta: '/pos',
+    categoria: 'Ventas',
+  },
+  // ─── SERVICIOS ─────────────────────────────────────────────
   {
     id: 'agenda',
     nombre: 'Agenda / Citas',
@@ -55,15 +70,49 @@ export const MODULOS_DISPONIBLES = [
   {
     id: 'servicios',
     nombre: 'Servicios',
-    descripcion: 'Catálogo de servicios ofrecidos y gestión de precios.',
+    descripcion: 'Catálogo de servicios ofrecidos con duración y precios.',
     icono: 'Briefcase',
     ruta: '/servicios',
     categoria: 'Servicios',
   },
+  // ─── GESTIÓN ───────────────────────────────────────────────
+  {
+    id: 'clientes',
+    nombre: 'Clientes',
+    descripcion: 'Base de datos de clientes, historial y gestión de contactos.',
+    icono: 'Users',
+    ruta: '/clientes',
+    categoria: 'Gestión',
+  },
+  {
+    id: 'empleados',
+    nombre: 'Empleados',
+    descripcion: 'Gestión de personal, turnos de trabajo y asignación de servicios.',
+    icono: 'UserCheck',
+    ruta: '/empleados',
+    categoria: 'Gestión',
+  },
+  {
+    id: 'fidelizacion',
+    nombre: 'Fidelización',
+    descripcion: 'Programa de puntos, clientes frecuentes y recompensas.',
+    icono: 'Gift',
+    ruta: '/fidelizacion',
+    categoria: 'Gestión',
+  },
+  {
+    id: 'admins',
+    nombre: 'Multi-Admins',
+    descripcion: 'Varios usuarios administradores con acceso al panel.',
+    icono: 'Shield',
+    ruta: '/admins',
+    categoria: 'Gestión',
+  },
+  // ─── ANALÍTICA ─────────────────────────────────────────────
   {
     id: 'ventas',
     nombre: 'Ventas',
-    descripcion: 'Dashboard de ventas, ingresos y reportes financieros.',
+    descripcion: 'Dashboard de ventas, ingresos y comparativas.',
     icono: 'DollarSign',
     ruta: '/ventas',
     categoria: 'Analítica',
@@ -77,12 +126,12 @@ export const MODULOS_DISPONIBLES = [
     categoria: 'Analítica',
   },
   {
-    id: 'admins',
-    nombre: 'Gestión de Admins',
-    descripcion: 'Múltiples usuarios administradores con diferentes permisos.',
-    icono: 'Shield',
-    ruta: '/admins',
-    categoria: 'Configuración',
+    id: 'reportes',
+    nombre: 'Reportes PDF',
+    descripcion: 'Exportación de reportes de ventas, inventario y clientes en PDF.',
+    icono: 'FileText',
+    ruta: '/reportes',
+    categoria: 'Analítica',
   },
 ];
 
@@ -91,15 +140,38 @@ export const MODULOS_DISPONIBLES = [
  * El SuperAdmin puede ajustar manualmente después de elegir el plan.
  */
 export const MODULOS_POR_PLAN = {
-  'básico': ['tienda', 'inventario', 'pedidos', 'clientes'],
-  'pro':    ['tienda', 'inventario', 'pedidos', 'clientes', 'agenda', 'servicios', 'ventas', 'estadisticas'],
-  'advance':['tienda', 'inventario', 'pedidos', 'clientes', 'agenda', 'servicios', 'ventas', 'estadisticas', 'admins'],
+  'básico':  ['tienda', 'inventario', 'pedidos', 'clientes'],
+  'pro':     ['tienda', 'inventario', 'pedidos', 'domicilios', 'cupones', 'clientes',
+              'agenda', 'servicios', 'ventas', 'estadisticas', 'admins'],
+  'advance': ['tienda', 'inventario', 'pedidos', 'domicilios', 'cupones', 'pos', 'clientes',
+              'agenda', 'servicios', 'empleados', 'fidelizacion', 'admins',
+              'ventas', 'estadisticas', 'reportes'],
+};
+
+/**
+ * Descripción corta de cada plan para mostrar en el selector.
+ */
+export const INFO_PLANES = {
+  'básico': {
+    descripcion: 'Ideal para negocios pequeños que arrancan.',
+    color: '#64748b',
+    bg: '#f1f5f9',
+  },
+  'pro': {
+    descripcion: 'Tienda + Agenda + Estadísticas + Domicilios.',
+    color: '#2563eb',
+    bg: '#eff6ff',
+    popular: true,
+  },
+  'advance': {
+    descripcion: 'Todo ilimitado: POS, Empleados, Fidelización, API.',
+    color: '#fbbf24',
+    bg: '#1e293b',
+  },
 };
 
 /**
  * Devuelve el objeto de módulos (true/false) por defecto para un plan dado.
- * Ejemplo: getModulosPorDefecto('pro') =>
- *   { tienda: true, inventario: true, ..., agenda: true, admins: false }
  */
 export function getModulosPorDefecto(plan) {
   const activos = MODULOS_POR_PLAN[plan] || MODULOS_POR_PLAN['básico'];
@@ -111,20 +183,20 @@ export function getModulosPorDefecto(plan) {
 
 /**
  * Verifica si un módulo está habilitado para una empresa.
- * Soporta tanto el nuevo formato (modulos JSONB) como el legacy (usa_inventario, usa_citas).
+ * Soporta el nuevo formato (modulos JSONB) y el legacy (usa_inventario, usa_citas).
  */
 export function moduloHabilitado(empresaConfig, moduloId) {
   if (empresaConfig?.modulos) {
     return empresaConfig.modulos[moduloId] === true;
   }
-  // Compatibilidad con el formato anterior
-  if (moduloId === 'inventario' || moduloId === 'tienda' || moduloId === 'pedidos' || moduloId === 'ventas') {
+  // Compatibilidad con formato anterior
+  if (['inventario', 'tienda', 'pedidos', 'ventas', 'domicilios'].includes(moduloId)) {
     return empresaConfig?.usa_inventario === true;
   }
-  if (moduloId === 'agenda' || moduloId === 'servicios') {
+  if (['agenda', 'servicios'].includes(moduloId)) {
     return empresaConfig?.usa_citas === true;
   }
-  return moduloId === 'clientes'; // clientes siempre disponible
+  return moduloId === 'clientes';
 }
 
 /**
@@ -132,4 +204,13 @@ export function moduloHabilitado(empresaConfig, moduloId) {
  */
 export function getModulo(moduloId) {
   return MODULOS_DISPONIBLES.find(m => m.id === moduloId);
+}
+
+/**
+ * Genera una clave de licencia única.
+ * Formato: LIC-XXXX-XXXX-XXXX
+ */
+export function generarLicencia() {
+  const segment = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `LIC-${segment()}-${segment()}-${segment()}`;
 }
