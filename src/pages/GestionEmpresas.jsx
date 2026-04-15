@@ -62,7 +62,7 @@ function GestionEmpresas() {
         logoUrlFinal = publicUrl;
       }
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('empresas')
         .insert([{ 
           nombre, 
@@ -74,11 +74,30 @@ function GestionEmpresas() {
           hora_apertura: horaApertura,
           hora_cierre: horaCierre,
           intervalo_citas: intervaloCitas
-        }]);
+        }]).select();
 
       if (error) throw error;
       
-      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Empresa registrada', showConfirmButton: false, timer: 3000 });
+      const nuevaEmpresa = data[0];
+      const urlTienda = `${window.location.origin}/?tienda=${nuevaEmpresa.id}`;
+
+      Swal.fire({
+        title: '¡Espacio Creado!',
+        html: `
+          <div style="text-align: left; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px;">
+            <p style="margin: 0 0 10px 0; color: #475569; font-size: 14px;"><strong>1. Enlace de la Tienda (Para Clientes):</strong><br/>Copia y comparte este enlace con el dueño del negocio:</p>
+            <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; word-break: break-all; font-family: monospace; font-size: 13px; color: #3b82f6; margin-bottom: 15px; user-select: all;">
+              ${urlTienda}
+            </div>
+            <p style="margin: 0 0 5px 0; color: #d97706; font-size: 14px; font-weight: bold;">⚠️ 2. Siguiente Paso Obligatorio:</p>
+            <p style="margin: 0; color: #64748b; font-size: 13px;">Ve a la sección <b>"Cuentas de Admins"</b> y enlaza el correo del dueño a <b>${nuevaEmpresa.nombre}</b> para que pueda entrar como Administrador.</p>
+          </div>
+        `,
+        icon: 'success',
+        confirmButtonText: 'Entendido, continuar',
+        confirmButtonColor: '#3b82f6'
+      });
+
       setNombre('');
       setRut('');
       setUsaInventario(true);
