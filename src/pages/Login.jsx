@@ -1,219 +1,295 @@
 import { useState } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Eye, EyeOff, Lock, LockOpen, User, MapPin, Mail, Briefcase } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, MapPin, Briefcase, ArrowRight, CheckCircle2 } from 'lucide-react';
 
-// modo: 'cliente' | 'registro' | 'admin'
+/* ─── Paleta nueva: Teal + Violet (nada de indigo estándar) ─── */
+const TEAL   = '#0891b2';  // clientes
+const VIOLET = '#7c3aed';  // admins
+const NAVY   = '#0a1628';
+
 function Login() {
-  const [modo, setModo] = useState('cliente'); // 'cliente', 'registro', 'admin'
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [licencia, setLicencia] = useState(''); // clave de acceso para admins
-  const [nombre, setNombre] = useState('');
+  const [modo, setModo]           = useState('cliente'); // 'cliente' | 'registro' | 'admin'
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [nombre, setNombre]       = useState('');
   const [direccion, setDireccion] = useState('');
-  const [cargando, setCargando] = useState(false);
-  const [verContrasena, setVerContrasena] = useState(false);
-  const [loginExitoso, setLoginExitoso] = useState(false);
+  const [cargando, setCargando]   = useState(false);
+  const [verPass, setVerPass]     = useState(false);
+  const [ok, setOk]               = useState(false);
 
-  async function manejarAcceso(e) {
+  const esAdmin    = modo === 'admin';
+  const esRegistro = modo === 'registro';
+  const accent     = esAdmin ? VIOLET : TEAL;
+
+  async function submit(e) {
     e.preventDefault();
     setCargando(true);
-    setLoginExitoso(false);
+    setOk(false);
     const tiendaActual = localStorage.getItem('tiendaActual');
 
-    // ── MODO ADMIN: email + licencia como contraseña ─────────────
-    if (modo === 'admin') {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: licencia.trim(),
-      });
+    /* ── Admin / SuperAdmin ──────────────────────────────── */
+    if (esAdmin) {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       setCargando(false);
       if (error) {
-        Swal.fire('Acceso denegado', 'Correo o licencia incorrectos. Verifica los datos proporcionados por tu proveedor.', 'error');
-      } else {
-        setLoginExitoso(true);
-      }
+        Swal.fire({
+          title: 'Acceso denegado',
+          text: 'Correo o contraseña/licencia incorrectos.',
+          icon: 'error', confirmButtonColor: VIOLET,
+        });
+      } else setOk(true);
       return;
     }
 
-    // ── MODO REGISTRO ────────────────────────────────────────────
-    if (modo === 'registro') {
-      if (!nombre) {
+    /* ── Registro cliente ────────────────────────────────── */
+    if (esRegistro) {
+      if (!nombre.trim()) {
         setCargando(false);
-        return Swal.fire('Error', 'El nombre es obligatorio', 'warning');
+        return Swal.fire({ title: 'Falta el nombre', icon: 'warning', confirmButtonColor: TEAL });
       }
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email, password,
         options: { data: { nombre, direccion, telefono: '' } },
       });
+      setCargando(false);
       if (error) {
-        if (error.message.includes('already registered') || error.status === 422) {
-          Swal.fire('Cuenta existente', 'Tu correo ya está registrado. Inicia sesión.', 'info');
-        } else {
-          Swal.fire('Error', error.message, 'error');
-        }
+        const yaExiste = error.message.includes('already registered') || error.status === 422;
+        Swal.fire({
+          title: yaExiste ? 'Correo ya registrado' : 'Error',
+          text:  yaExiste ? 'Ese correo ya tiene cuenta. Inicia sesión.' : error.message,
+          icon: yaExiste ? 'info' : 'error', confirmButtonColor: TEAL,
+        });
+        if (yaExiste) setModo('cliente');
       } else {
         if (tiendaActual) {
           await supabase.from('clientes').insert([{
             nombre, correo: email, telefono: '', direccion, empresa_id: tiendaActual,
           }]);
         }
-        Swal.fire('¡Éxito!', 'Cuenta creada. Ya puedes iniciar sesión.', 'success');
+        Swal.fire({ title: '¡Cuenta creada!', text: 'Ya puedes iniciar sesión.', icon: 'success', confirmButtonColor: TEAL });
         setModo('cliente');
+        setNombre(''); setDireccion(''); setPassword('');
       }
-      setCargando(false);
       return;
     }
 
-    // ── MODO CLIENTE: email + contraseña ─────────────────────────
+    /* ── Login cliente ───────────────────────────────────── */
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    setCargando(false);
     if (error) {
-      Swal.fire('Error', 'Credenciales incorrectas', 'error');
-      setCargando(false);
+      Swal.fire({ title: 'Credenciales incorrectas', icon: 'error', confirmButtonColor: TEAL });
     } else {
       if (tiendaActual) {
-        const { data: existente } = await supabase.from('clientes')
+        const { data: existe } = await supabase.from('clientes')
           .select('id').eq('correo', email).eq('empresa_id', tiendaActual).maybeSingle();
-        if (!existente) {
-          const meta = data.user.user_metadata;
+        if (!existe) {
+          const m = data.user.user_metadata;
           await supabase.from('clientes').insert([{
-            nombre: meta?.nombre || 'Cliente Web',
-            correo: email, telefono: meta?.telefono || '',
-            direccion: meta?.direccion || '', empresa_id: tiendaActual,
+            nombre: m?.nombre || 'Cliente Web', correo: email,
+            telefono: m?.telefono || '', direccion: m?.direccion || '',
+            empresa_id: tiendaActual,
           }]);
         }
       }
-      setLoginExitoso(true);
+      setOk(true);
     }
   }
 
   return (
-    <div style={s.overlay}>
-      <div style={s.card}>
-        {/* ── Ícono ─────────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', color: loginExitoso ? '#10b981' : '#4f46e5', transition: 'all 0.4s', transform: loginExitoso ? 'scale(1.2)' : 'scale(1)' }}>
-          {loginExitoso ? <LockOpen size={64} /> : <Lock size={64} />}
+    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui,-apple-system,sans-serif' }}>
+
+      {/* ══ Panel izquierdo — Marca ══════════════════════════════ */}
+      <div className="login-brand" style={{
+        width: '42%', background: `linear-gradient(160deg, ${NAVY} 0%, #0c2340 55%, #110d2e 100%)`,
+        display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+        padding: '60px 44px', position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Orbes decorativos */}
+        <div style={{ position: 'absolute', top: '-80px', right: '-60px', width: '300px', height: '300px', borderRadius: '50%', background: `radial-gradient(circle, ${TEAL}22 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '-60px', left: '-40px', width: '260px', height: '260px', borderRadius: '50%', background: `radial-gradient(circle, ${VIOLET}20 0%, transparent 70%)`, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: '50%', left: '20%', width: '180px', height: '180px', borderRadius: '50%', background: `radial-gradient(circle, ${TEAL}10 0%, transparent 70%)`, pointerEvents: 'none' }} />
+
+        {/* Logo */}
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', marginBottom: '48px' }}>
+          <div style={{
+            width: '64px', height: '64px', borderRadius: '18px', margin: '0 auto 16px',
+            background: `linear-gradient(135deg, ${TEAL}, ${VIOLET})`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: `0 0 30px ${TEAL}44`,
+          }}>
+            <Briefcase size={28} color="white" />
+          </div>
+          <h1 style={{ margin: '0 0 6px', fontSize: '26px', fontWeight: '900', color: '#f0f9ff', letterSpacing: '0.5px' }}>
+            CRM <span style={{ color: TEAL }}>Pro</span>
+          </h1>
+          <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Plataforma de gestión empresarial</p>
         </div>
 
-        <h1 style={{ textAlign: 'center', marginBottom: '6px', color: '#1e293b' }}>
-          {modo === 'registro' ? 'Crear Cuenta' : modo === 'admin' ? 'Acceso Administrador' : 'Bienvenido'}
-        </h1>
-        <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
-          {modo === 'admin' ? 'Usa el correo y la licencia que te proporcionaron' : modo === 'registro' ? 'Regístrate para comprar en la tienda' : 'Ingresa a tu cuenta'}
-        </p>
-
-        {/* ── Tabs modo ─────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: '6px', marginBottom: '24px', background: '#f1f5f9', borderRadius: '10px', padding: '4px' }}>
+        {/* Tarjetas de acceso */}
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '12px', width: '100%', maxWidth: '280px' }}>
           {[
-            { id: 'cliente',  label: 'Cliente',       ico: <User size={14} /> },
-            { id: 'admin',    label: 'Administrador', ico: <Briefcase size={14} /> },
-          ].map(({ id, label, ico }) => (
-            <button key={id} type="button"
-              onClick={() => { setModo(id); setEmail(''); setPassword(''); }}
-              style={{
-                flex: 1, padding: '8px 0', border: 'none', borderRadius: '7px', cursor: 'pointer',
-                fontSize: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
-                background: modo === id ? 'white' : 'transparent',
-                color: modo === id ? '#4f46e5' : '#64748b',
-                boxShadow: modo === id ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-                transition: 'all 0.15s',
-              }}>
-              {ico} {label}
-            </button>
+            { ico: <User size={16} />, titulo: 'Portal de Clientes', desc: 'Compras, citas y pedidos', color: TEAL,   activo: !esAdmin },
+            { ico: <Briefcase size={16} />, titulo: 'Panel Administrativo', desc: 'Gestión y configuración', color: VIOLET, activo: esAdmin },
+          ].map(({ ico, titulo, desc, color, activo }) => (
+            <div key={titulo} style={{
+              background: activo ? `${color}18` : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${activo ? `${color}40` : 'rgba(255,255,255,0.07)'}`,
+              borderRadius: '12px', padding: '14px 16px',
+              display: 'flex', alignItems: 'center', gap: '12px',
+              transition: 'all 0.2s',
+              boxShadow: activo ? `0 0 16px ${color}22` : 'none',
+            }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '9px', background: `${color}20`, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {ico}
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: activo ? '#f0f9ff' : '#64748b' }}>{titulo}</p>
+                <p style={{ margin: 0, fontSize: '11px', color: activo ? `${color}` : '#475569' }}>{desc}</p>
+              </div>
+              {activo && <ArrowRight size={14} color={color} style={{ marginLeft: 'auto', flexShrink: 0 }} />}
+            </div>
           ))}
         </div>
 
-        {/* ── Formulario ────────────────────────────────── */}
-        <form onSubmit={manejarAcceso} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Nota SuperAdmin */}
+        <p style={{ position: 'relative', zIndex: 1, marginTop: '32px', fontSize: '10px', color: '#334155', textAlign: 'center', lineHeight: 1.5, maxWidth: '240px' }}>
+          SuperAdmin: usa el tab <b style={{ color: VIOLET }}>Panel Administrativo</b> con tus credenciales personales.
+        </p>
+      </div>
 
-          {modo === 'registro' && (
-            <>
-              <div style={s.inputGroup}>
-                <User style={s.inputIcon} size={18} />
-                <input type="text" placeholder="Tu nombre completo" value={nombre}
-                  onChange={e => setNombre(e.target.value)} style={s.input} />
-              </div>
-              <div style={s.inputGroup}>
-                <MapPin style={s.inputIcon} size={18} />
-                <input type="text" placeholder="Tu dirección de envío" value={direccion}
-                  onChange={e => setDireccion(e.target.value)} style={s.input} />
-              </div>
-            </>
-          )}
+      {/* ══ Panel derecho — Formulario ═══════════════════════════ */}
+      <div className="login-form-panel" style={{
+        flex: 1, background: '#f8fafc',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '40px 20px',
+      }}>
+        <div style={{ width: '100%', maxWidth: '380px' }}>
 
-          <div style={s.inputGroup}>
-            <Mail style={s.inputIcon} size={18} />
-            <input type="email" placeholder="Tu correo electrónico" value={email}
-              onChange={e => setEmail(e.target.value)} required style={s.input} />
-          </div>
-
-          {modo === 'admin' ? (
-            <div style={s.inputGroup}>
-              <Briefcase style={s.inputIcon} size={18} />
-              <input
-                type="text"
-                placeholder="LIC-XXXX-XXXX-XXXX"
-                value={licencia} onChange={e => setLicencia(e.target.value.toUpperCase())} required
-                style={{ ...s.input, letterSpacing: '1.5px', fontFamily: 'monospace', fontSize: '14px' }}
-              />
+          {/* Estado éxito */}
+          {ok ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <CheckCircle2 size={56} color={accent} style={{ marginBottom: '16px' }} />
+              <h2 style={{ color: '#0f172a', margin: '0 0 8px' }}>¡Acceso concedido!</h2>
+              <p style={{ color: '#64748b', fontSize: '14px' }}>Redirigiendo al panel...</p>
             </div>
           ) : (
-            <div style={{ position: 'relative' }}>
-              <input
-                type={verContrasena ? 'text' : 'password'}
-                placeholder="Tu contraseña (mínimo 6 caracteres)"
-                value={password} onChange={e => setPassword(e.target.value)} required
-                style={{ ...s.input, paddingRight: '44px' }}
-              />
-              <button type="button" onClick={() => setVerContrasena(!verContrasena)}
-                style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 0, display: 'flex' }}>
-                {verContrasena ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
+            <>
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '4px', marginBottom: '28px', background: '#e2e8f0', borderRadius: '11px', padding: '4px' }}>
+                {[
+                  { id: 'cliente', label: 'Portal Clientes', color: TEAL },
+                  { id: 'admin',   label: 'Panel Admin',     color: VIOLET },
+                ].map(({ id, label, color }) => {
+                  const activo = (id === 'admin' ? esAdmin : !esAdmin);
+                  return (
+                    <button key={id} type="button"
+                      onClick={() => { setModo(id); setEmail(''); setPassword(''); setNombre(''); setDireccion(''); }}
+                      style={{
+                        flex: 1, padding: '9px 0', border: 'none', borderRadius: '8px', cursor: 'pointer',
+                        fontSize: '12px', fontWeight: '700', transition: 'all 0.18s',
+                        background: activo ? 'white' : 'transparent',
+                        color: activo ? color : '#94a3b8',
+                        boxShadow: activo ? '0 1px 6px rgba(0,0,0,0.12)' : 'none',
+                      }}>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Título */}
+              <div style={{ marginBottom: '22px' }}>
+                <h2 style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: '800', color: '#0f172a' }}>
+                  {esAdmin ? 'Acceso al panel' : esRegistro ? 'Crear cuenta' : 'Bienvenido de vuelta'}
+                </h2>
+                <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+                  {esAdmin
+                    ? 'Ingresa tu correo y contraseña o licencia'
+                    : esRegistro
+                      ? 'Regístrate para acceder a la tienda'
+                      : 'Ingresa con tus credenciales'}
+                </p>
+              </div>
+
+              {/* Formulario */}
+              <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                {esRegistro && (
+                  <>
+                    <Field icon={<User size={15} />} placeholder="Nombre completo" value={nombre} onChange={e => setNombre(e.target.value)} accent={accent} />
+                    <Field icon={<MapPin size={15} />} placeholder="Dirección de envío" value={direccion} onChange={e => setDireccion(e.target.value)} accent={accent} />
+                  </>
+                )}
+
+                <Field icon={<Mail size={15} />} type="email" placeholder="Correo electrónico" value={email} onChange={e => setEmail(e.target.value)} required accent={accent} />
+
+                {/* Contraseña / Licencia */}
+                <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                    <Lock size={15} />
+                  </div>
+                  <input
+                    type={verPass ? 'text' : 'password'}
+                    placeholder={esAdmin ? 'Contraseña o licencia (LIC-XXXX-XXXX-XXXX)' : 'Contraseña (mín. 6 caracteres)'}
+                    value={password} onChange={e => setPassword(esAdmin ? e.target.value.toUpperCase() : e.target.value)}
+                    required style={{ ...inputStyle, paddingRight: '42px', fontFamily: esAdmin && password.startsWith('LIC') ? 'monospace' : 'inherit' }}
+                  />
+                  <button type="button" onClick={() => setVerPass(v => !v)}
+                    style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: 0, display: 'flex' }}>
+                    {verPass ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+
+                {/* Botón principal */}
+                <button type="submit" disabled={cargando} style={{
+                  marginTop: '4px', padding: '13px', border: 'none', borderRadius: '10px',
+                  background: cargando ? '#94a3b8' : `linear-gradient(135deg, ${accent}, ${accent}cc)`,
+                  color: 'white', fontSize: '14px', fontWeight: '700', cursor: cargando ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  boxShadow: cargando ? 'none' : `0 4px 14px ${accent}44`,
+                  transition: 'all 0.2s',
+                }}>
+                  {cargando ? 'Verificando...' : esAdmin ? 'Entrar al panel' : esRegistro ? 'Crear mi cuenta' : 'Iniciar sesión'}
+                  {!cargando && <ArrowRight size={16} />}
+                </button>
+              </form>
+
+              {/* Toggle registro */}
+              {!esAdmin && (
+                <p style={{ textAlign: 'center', marginTop: '20px', fontSize: '13px', color: '#64748b' }}>
+                  {esRegistro ? '¿Ya tienes cuenta? ' : '¿No tienes cuenta? '}
+                  <button
+                    onClick={() => { setModo(esRegistro ? 'cliente' : 'registro'); setNombre(''); setDireccion(''); setPassword(''); }}
+                    style={{ background: 'none', border: 'none', color: TEAL, cursor: 'pointer', fontWeight: '700', fontSize: '13px', padding: 0 }}>
+                    {esRegistro ? 'Inicia sesión' : 'Regístrate gratis'}
+                  </button>
+                </p>
+              )}
+            </>
           )}
-
-          <button type="submit" disabled={cargando} style={{
-            padding: '14px', background: loginExitoso ? '#10b981' : '#4f46e5', color: 'white',
-            border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700',
-            cursor: cargando ? 'not-allowed' : 'pointer', transition: 'background 0.3s', marginTop: '4px',
-          }}>
-            {cargando ? 'Cargando...' : loginExitoso ? '¡Acceso Concedido!' : modo === 'admin' ? 'Ingresar al panel' : modo === 'registro' ? 'Registrarme' : 'Entrar'}
-          </button>
-        </form>
-
-        {/* ── Toggle registro (solo en modo cliente) ───── */}
-        {(modo === 'cliente' || modo === 'registro') && (
-          <div style={{ textAlign: 'center', marginTop: '18px' }}>
-            <button
-              onClick={() => { setModo(modo === 'registro' ? 'cliente' : 'registro'); setNombre(''); setDireccion(''); }}
-              style={{ background: 'none', border: 'none', color: '#4f46e5', cursor: 'pointer', fontWeight: '600', textDecoration: 'underline', fontSize: '13px' }}>
-              {modo === 'registro' ? '¿Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
-            </button>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );
 }
 
-const s = {
-  overlay: {
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    minHeight: '100vh', background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-    fontFamily: 'sans-serif', padding: '20px',
-  },
-  card: {
-    background: 'white', padding: '40px', borderRadius: '16px',
-    width: '100%', maxWidth: '420px',
-    boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-  },
-  inputGroup: { position: 'relative' },
-  inputIcon: { position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' },
-  input: {
-    width: '100%', padding: '12px 12px 12px 40px', borderRadius: '8px',
-    border: '1px solid #e2e8f0', fontSize: '15px', boxSizing: 'border-box', outline: 'none',
-  },
+/* ─── Campo reutilizable ────────────────────────────────────── */
+function Field({ icon, ...props }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <div style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>{icon}</div>
+      <input {...props} style={{ ...inputStyle, paddingLeft: '40px' }} />
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: '100%', padding: '12px 12px 12px 40px', borderRadius: '9px',
+  border: '1.5px solid #e2e8f0', fontSize: '13.5px',
+  boxSizing: 'border-box', outline: 'none',
+  background: 'white', color: '#0f172a',
+  transition: 'border-color 0.15s',
 };
 
 export default Login;
