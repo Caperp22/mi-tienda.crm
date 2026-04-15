@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import Swal from 'sweetalert2';
 
 import { supabase } from './config/supabase';
+import { moduloHabilitado } from './config/modulos';
 import Sidebar from './components/Sidebar';
 
 import Agenda from './pages/Agenda';
@@ -79,7 +80,7 @@ function useAuth() {
       }
 
       if (currentEmpresaId) {
-        const { data: empData } = await supabase.from('empresas').select('nombre, usa_inventario, usa_citas, color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan').eq('id', currentEmpresaId).maybeSingle();
+        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan').eq('id', currentEmpresaId).maybeSingle();
         if (empData) {
           setEmpresaNombre(empData.nombre);
           // Guardamos la configuración visual y de módulos
@@ -387,15 +388,24 @@ function App() {
           </div>
           <div className="admin-content" style={{ padding: '40px' }}>
             <Routes>
-              <Route path="/" element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} />} />
+              {/* Ruta raíz: redirige al primer módulo habilitado */}
+              <Route path="/" element={
+                moduloHabilitado(empresaConfig, 'agenda')
+                  ? <Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} />
+                  : moduloHabilitado(empresaConfig, 'pedidos')
+                    ? <Navigate to="/pedidos" />
+                    : moduloHabilitado(empresaConfig, 'inventario')
+                      ? <Navigate to="/inventario" />
+                      : <Navigate to="/clientes" />
+              } />
+              {moduloHabilitado(empresaConfig, 'servicios')  && <Route path="/servicios"    element={<Servicios empresaId={empresaId} />} />}
+              {moduloHabilitado(empresaConfig, 'pedidos')    && <Route path="/pedidos"      element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />}
+              {moduloHabilitado(empresaConfig, 'inventario') && <Route path="/inventario"   element={<Inventario empresaId={empresaId} />} />}
+              {moduloHabilitado(empresaConfig, 'ventas')     && <Route path="/ventas"       element={<Ventas />} />}
+              {moduloHabilitado(empresaConfig, 'admins')     && <Route path="/admins"       element={<GestionAdmins />} />}
               <Route path="/clientes" element={<Clientes />} />
-              <Route path="/inventario" element={<Inventario empresaId={empresaId} />} />
-              <Route path="/pedidos" element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />
-              <Route path="/servicios" element={<Servicios empresaId={empresaId} />} />
-              <Route path="/ventas" element={<Ventas />} />
-              <Route path="/admins" element={<GestionAdmins />} /> 
-              <Route path="/ajustes" element={<AjustesTienda empresaId={empresaId} />} />
-              <Route path="*" element={<Navigate to="/" />} />
+              <Route path="/ajustes"  element={<AjustesTienda empresaId={empresaId} />} />
+              <Route path="*"         element={<Navigate to="/" />} />
             </Routes>
           </div>
         </div>
@@ -415,13 +425,13 @@ function App() {
         <Routes>
           {/* Ruteo inteligente basado en la configuración del negocio */}
           <Route path="/" element={
-            empresaConfig.usa_inventario 
-              ? <Tienda usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} /> 
-              : (empresaConfig.usa_citas ? <Navigate to="/agendar" /> : <div>Esta tienda no tiene servicios activos.</div>)
+            moduloHabilitado(empresaConfig, 'tienda')
+              ? <Tienda usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />
+              : (moduloHabilitado(empresaConfig, 'agenda') ? <Navigate to="/agendar" /> : <div style={{padding:'40px',textAlign:'center',color:'#64748b'}}>Esta tienda no tiene servicios activos.</div>)
           } />
-          
+
           <Route path="/agendar" element={
-            empresaConfig.usa_citas
+            moduloHabilitado(empresaConfig, 'agenda')
               ? <AgendarCita usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />
               : <Navigate to="/" />
           } />
