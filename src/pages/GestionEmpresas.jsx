@@ -189,6 +189,7 @@ function GestionEmpresas({ dark = false }) {
   // Formulario
   const [nombre, setNombre] = useState('');
   const [rut, setRut] = useState('');
+  const [slug, setSlug] = useState('');
   const [email, setEmail] = useState('');
   const [plan, setPlan] = useState('pro');
   const [modulos, setModulos] = useState(getModulosPorDefecto('pro'));
@@ -233,7 +234,7 @@ useEffect(() => { cargar(); }, [cargar]);
       }
       const licencia = generarLicencia();
       const { data, error: ee } = await supabase.from('empresas').insert([{
-        nombre, rut, email_admin: email, licencia, plan, modulos,
+        nombre, rut, slug, email_admin: email, licencia, plan, modulos,
         usa_inventario: modulos.inventario || false, usa_citas: modulos.agenda || false,
         color_principal: color, logo_url: logoUrl,
         hora_apertura: horaAp, hora_cierre: horaCi, intervalo_citas: intCitas, estado: 'activa',
@@ -257,7 +258,7 @@ useEffect(() => { cargar(); }, [cargar]);
           `La empresa quedó registrada en el sistema, pero no se pudo crear la cuenta de login.\n\nError: ${authError.message}\n\nPuede intentar recrear el acceso desde el panel de Supabase.`,
           'warning');
       } else {
-        const url = `${window.location.origin}/?tienda=${nueva.id}`;
+        const url = `${window.location.origin}/${nueva.slug || `?tienda=${nueva.id}`}`;
         Swal.fire({ title: yaExistia ? '⚠️ Empresa creada — Revisar acceso' : '✅ Empresa creada', width: 580, icon: yaExistia ? 'warning' : 'success', confirmButtonColor: '#7c3aed', confirmButtonText: 'Entendido',
           html: `<div style="text-align:left;font-size:12px;display:flex;flex-direction:column;gap:10px;">
 
@@ -280,7 +281,7 @@ useEffect(() => { cargar(); }, [cargar]);
           </div>`,
         });
       }
-      setNombre(''); setRut(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro'));
+      setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro'));
       setColor('#3b82f6'); setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setPaso(1);
       cargar();
     } catch (err) { Swal.fire('Error', err.message, 'error'); }
@@ -323,9 +324,10 @@ useEffect(() => { cargar(); }, [cargar]);
   }
 
   async function copiarAcceso(emp) {
-    const texto = `Empresa: ${emp.nombre}\nEmail: ${emp.email_admin}\nLicencia: ${emp.licencia}\nAcceso: ${window.location.origin}`;
+    const url = `${window.location.origin}/${emp.slug || `?tienda=${emp.id}`}`;
+    const texto = `Empresa: ${emp.nombre}\nEmail: ${emp.email_admin}\nLicencia: ${emp.licencia}\nAcceso: ${url}`;
     await navigator.clipboard.writeText(texto);
-    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Credenciales copiadas', showConfirmButton: false, timer: 1800 });
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Credenciales y enlace copiados', showConfirmButton: false, timer: 2000 });
   }
 
   const emp_filtradas = empresas.filter(e =>
@@ -429,6 +431,11 @@ useEffect(() => { cargar(); }, [cargar]);
                   <div>
                     <label style={lbl}>RUT / NIT</label>
                     <input type="text" placeholder="900.123.456-7" value={rut} onChange={e => setRut(e.target.value)} style={inp} required />
+                  </div>
+                  <div>
+                    <label style={lbl}>URL Personalizada (slug)</label>
+                    <input type="text" placeholder="pizzeria-carlos" value={slug} onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} style={{...inp, fontFamily: 'monospace'}} required />
+                    <p style={{margin: '3px 0 0', fontSize: '9px', color: t.muted}}>Solo minúsculas, números y guiones.</p>
                   </div>
                   <div>
                     <label style={lbl}><Mail size={9} style={{ display: 'inline', marginRight: '3px' }} />Correo del admin</label>
@@ -625,13 +632,17 @@ useEffect(() => { cargar(); }, [cargar]);
                               )}
                               <div>
                                 <p style={{ margin: '0 0 1px', fontWeight: '700', color: t.text, fontSize: '12px' }}>{emp.nombre}</p>
-                                {emp.email_admin && <p style={{ margin: '0 0 1px', fontSize: '10px', color: t.muted, display: 'flex', alignItems: 'center', gap: '2px' }}><Mail size={8} />{emp.email_admin}</p>}
+                              {emp.email_admin && <p style={{ margin: '0 0 1px', fontSize: '10px', color: t.muted, display: 'flex', alignItems: 'center', gap: '3px' }}><Mail size={9} />{emp.email_admin}</p>}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '4px' }}>
                                 {emp.licencia && (
-                                  <button onClick={() => { navigator.clipboard.writeText(emp.licencia); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copiado', showConfirmButton: false, timer: 1500 }); }}
-                                    style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '3px', color: '#a78bfa', fontSize: '9px', fontFamily: 'monospace', fontWeight: '600' }}>
-                                    <Copy size={8} />{emp.licencia}
-                                  </button>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: t.badge, padding: '2px 6px', borderRadius: '4px', fontSize: '9px', fontFamily: 'monospace', fontWeight: '600', color: '#a78bfa' }}>
+                                    <KeyRound size={9} /> {emp.licencia}
+                                  </span>
                                 )}
+                                <a href={`/${emp.slug || `?tienda=${emp.id}`}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: t.badge, padding: '2px 6px', borderRadius: '4px', fontSize: '9px', textDecoration: 'none', color: '#38bdf8', fontWeight: '600' }}>
+                                   <Store size={9} /> /{emp.slug || `?tienda=${emp.id.substring(0,6)}...`}
+                                </a>
+                              </div>
                               </div>
                             </div>
                           </td>

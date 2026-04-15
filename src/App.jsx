@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon, Sun, Moon, Power, Store } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 
@@ -42,19 +42,42 @@ function useAuth() {
     hora_apertura: '09:00',
     hora_cierre: '18:00',
     intervalo_citas: 30,
-    plan: 'pro'
+    plan: 'pro',
+    estado: 'activa'
   });
 
   useEffect(() => {
-    // 1. Capturar ID de la tienda desde la URL (SaaS Multi-tenant)
-    const params = new URLSearchParams(window.location.search);
-    const tiendaUrl = params.get('tienda');
-    if (tiendaUrl) {
-      localStorage.setItem('tiendaActual', tiendaUrl);
+    async function getEmpresaIdFromUrl() {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const tiendaIdPorQuery = params.get('tienda');
+      
+      // Extrae el 'slug' de la URL. Ej: /pizzeria -> 'pizzeria'
+      const slug = path.substring(1).split('/')[0];
+
+      // Prioridad 1: Buscar por slug en la URL (ej: /pizzeria)
+      // Ignoramos rutas internas de la app cliente para no confundirlas con slugs.
+      if (slug && !['mis-pedidos', 'mis-citas', 'mi-perfil', 'agendar'].includes(slug)) {
+        const { data } = await supabase.from('empresas').select('id').eq('slug', slug).maybeSingle();
+        if (data) return data.id;
+      }
+
+      // Prioridad 2: Buscar por ID en el query param (ej: ?tienda=uuid)
+      if (tiendaIdPorQuery) {
+        return tiendaIdPorQuery;
+      }
+
+      // Prioridad 3: Usar el que esté guardado en localStorage
+      return localStorage.getItem('tiendaActual');
     }
 
     async function verificarSesionYRol(usuarioActual) {
-      let currentEmpresaId = null;
+      const resolvedEmpresaId = await getEmpresaIdFromUrl();
+      if (resolvedEmpresaId) {
+        localStorage.setItem('tiendaActual', resolvedEmpresaId);
+      }
+      
+      let currentEmpresaId = resolvedEmpresaId;
 
       if (usuarioActual) {
         // Consultamos el rol y a qué empresa pertenece
@@ -69,18 +92,16 @@ function useAuth() {
           setEmpresaId(data.empresa_id);
           currentEmpresaId = data.empresa_id;
         } else {
-          setRol('cliente');
-          currentEmpresaId = localStorage.getItem('tiendaActual');
-          setEmpresaId(currentEmpresaId);
+          setRol('cliente'); // Es un cliente normal
+          setEmpresaId(currentEmpresaId); // Usa el ID resuelto de la URL/storage
         }
       } else {
-        setRol('cliente');
-        currentEmpresaId = localStorage.getItem('tiendaActual');
-        setEmpresaId(currentEmpresaId);
+        setRol('cliente'); // No hay sesión
+        setEmpresaId(currentEmpresaId); // Usa el ID resuelto de la URL/storage
       }
 
       if (currentEmpresaId) {
-        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan').eq('id', currentEmpresaId).maybeSingle();
+        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, slug, estado').eq('id', currentEmpresaId).maybeSingle();
         if (empData) {
           setEmpresaNombre(empData.nombre);
           // Guardamos la configuración visual y de módulos
@@ -525,7 +546,14 @@ function App() {
              <button onClick={cerrarSesion} style={{ padding: '8px 15px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cerrar Sesión</button>
           </div>
           <div className="admin-content" style={{ padding: '40px' }}>
-            <Routes>
+            {empresaConfig?.estado === 'inactiva' ? (
+              <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                <Power size={48} color="#ef4444" style={{ marginBottom: '15px' }} />
+                <h2 style={{ margin: '0 0 10px', color: '#1e293b' }}>Cuenta Suspendida</h2>
+                <p style={{ color: '#64748b' }}>El portal de tu negocio ha sido pausado. Por favor, contacta al administrador del sistema.</p>
+              </div>
+            ) : (
+              <Routes>
               {/* Ruta raíz: redirige al primer módulo habilitado */}
               <Route path="/" element={
                 moduloHabilitado(empresaConfig, 'agenda')
@@ -545,6 +573,7 @@ function App() {
               <Route path="/ajustes"  element={<AjustesTienda empresaId={empresaId} />} />
               <Route path="*"         element={<Navigate to="/" />} />
             </Routes>
+            )}
           </div>
         </div>
       </div>
@@ -555,12 +584,20 @@ function App() {
   return (
     <div style={{ width: '100%', background: esTemaOscuro ? '#0f172a' : '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif', transition: 'background-color 0.3s' }}>
       <div style={{ padding: '0' }}>
-        {!empresaId && (
+        {empresaConfig?.estado === 'inactiva' ? (
+          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px' }}>
+            <Store size={64} style={{ marginBottom: '20px', opacity: 0.3, color: esTemaOscuro ? '#94a3b8' : '#64748b' }} />
+            <h2 style={{ color: esTemaOscuro ? '#f1f5f9' : '#1e293b' }}>Tienda en Mantenimiento</h2>
+            <p style={{ color: esTemaOscuro ? '#94a3b8' : '#64748b' }}>Este negocio se encuentra temporalmente inactivo.</p>
+          </div>
+        ) : (
+          <>
+            {!empresaId && (
           <div style={{ background: '#ef4444', color: 'white', padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: 'bold' }}>
             ⚠️ Estás navegando sin una tienda seleccionada. Por favor usa el enlace directo que te proporcionó el negocio.
           </div>
-        )}
-        <Routes>
+            )}
+            <Routes>
           {/* Ruteo inteligente basado en la configuración del negocio */}
           <Route path="/" element={
             moduloHabilitado(empresaConfig, 'tienda')
@@ -579,6 +616,8 @@ function App() {
           <Route path="/mi-perfil" element={<MiPerfil usuario={usuario} esTemaOscuro={esTemaOscuro} setEsTemaOscuro={setEsTemaOscuro} cerrarSesion={cerrarSesion} notificaciones={notificaciones} setNotificaciones={setNotificaciones} empresaId={empresaId} empresaNombre={empresaNombre} empresaConfig={empresaConfig} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+          </>
+        )}
       </div>
     </div>
   );
