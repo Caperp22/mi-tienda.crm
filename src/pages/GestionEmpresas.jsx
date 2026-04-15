@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Building2, Plus, Power, Store, Calendar, Palette, Image as ImageIcon, Clock, CheckCircle, Trash2 } from 'lucide-react';
+import { Building2, Plus, Power, Store, Calendar, Palette, Image as ImageIcon, Clock, CheckCircle, Trash2, Zap, Star, Crown } from 'lucide-react';
 
 function GestionEmpresas() {
   const [empresas, setEmpresas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [nombre, setNombre] = useState('');
   const [rut, setRut] = useState('');
+  const [planSeleccionado, setPlanSeleccionado] = useState('pro'); // basico, pro, advance
   const [usaInventario, setUsaInventario] = useState(true);
   const [usaCitas, setUsaCitas] = useState(true);
   const [colorPrincipal, setColorPrincipal] = useState('#3b82f6');
@@ -67,6 +68,7 @@ function GestionEmpresas() {
         .insert([{ 
           nombre, 
           rut,
+          plan: planSeleccionado,
           usa_inventario: usaInventario, 
           usa_citas: usaCitas, 
           color_principal: colorPrincipal,
@@ -85,12 +87,12 @@ function GestionEmpresas() {
         title: '¡Espacio Creado!',
         html: `
           <div style="text-align: left; padding: 15px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px;">
-            <p style="margin: 0 0 10px 0; color: #475569; font-size: 14px;"><strong>1. Enlace de la Tienda (Para Clientes):</strong><br/>Copia y comparte este enlace con el dueño del negocio:</p>
+            <p style="margin: 0 0 10px 0; color: #475569; font-size: 14px;"><strong>1. Entrégale este portal a tu cliente:</strong><br/>Este es el enlace público y único de su tienda:</p>
             <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; word-break: break-all; font-family: monospace; font-size: 13px; color: #3b82f6; margin-bottom: 15px; user-select: all;">
               ${urlTienda}
             </div>
-            <p style="margin: 0 0 5px 0; color: #d97706; font-size: 14px; font-weight: bold;">⚠️ 2. Siguiente Paso Obligatorio:</p>
-            <p style="margin: 0; color: #64748b; font-size: 13px;">Ve a la sección <b>"Cuentas de Admins"</b> y enlaza el correo del dueño a <b>${nuevaEmpresa.nombre}</b> para que pueda entrar como Administrador.</p>
+            <p style="margin: 0 0 5px 0; color: #d97706; font-size: 14px; font-weight: bold;">⚠️ 2. Credenciales de Acceso:</p>
+            <p style="margin: 0; color: #64748b; font-size: 13px;">Ve a la pestaña <b>"Cuentas de Admins"</b>, registra el correo del dueño (Ej. admin@${nuevaEmpresa.nombre.replace(/\s+/g, '').toLowerCase()}.com) y asígnale esta empresa. <br><br>Dile que inicie sesión en la URL de arriba con ese correo.</p>
           </div>
         `,
         icon: 'success',
@@ -100,6 +102,7 @@ function GestionEmpresas() {
 
       setNombre('');
       setRut('');
+      setPlanSeleccionado('pro');
       setUsaInventario(true);
       setUsaCitas(true);
       setColorPrincipal('#3b82f6');
@@ -160,7 +163,8 @@ function GestionEmpresas() {
     label: { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '6px' },
     formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' },
     checkboxContainer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '10px' },
-    btnPrimary: { width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'background 0.2s', marginTop: '10px' }
+    btnPrimary: { width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'background 0.2s', marginTop: '10px' },
+    planCard: (activo) => ({ border: activo ? '2px solid #3b82f6' : '1px solid #e2e8f0', background: activo ? '#eff6ff' : 'white', borderRadius: '12px', padding: '15px', cursor: 'pointer', flex: 1, textAlign: 'center', transition: 'all 0.2s', position: 'relative' })
   };
 
   return (
@@ -175,6 +179,32 @@ function GestionEmpresas() {
         <form onSubmit={crearEmpresa}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
             
+            {/* COLUMNA 0: Plan Comercial */}
+            <div style={{ gridColumn: '1 / -1' }}>
+               <div style={estilos.sectionTitle}><Crown size={16} color="#f59e0b" /> Tipo de Suscripción (Portal)</div>
+               <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                 
+                 <div style={estilos.planCard(planSeleccionado === 'básico')} onClick={() => setPlanSeleccionado('básico')}>
+                   <Zap size={24} color={planSeleccionado === 'básico' ? '#3b82f6' : '#94a3b8'} style={{ marginBottom: '10px' }} />
+                   <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1e293b' }}>Básico</h3>
+                   <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Ideal para negocios pequeños.</p>
+                 </div>
+                 
+                 <div style={estilos.planCard(planSeleccionado === 'pro')} onClick={() => setPlanSeleccionado('pro')}>
+                   {planSeleccionado === 'pro' && <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#3b82f6', color: 'white', fontSize: '10px', padding: '2px 10px', borderRadius: '10px', fontWeight: 'bold' }}>RECOMENDADO</span>}
+                   <Star size={24} color={planSeleccionado === 'pro' ? '#3b82f6' : '#94a3b8'} style={{ marginBottom: '10px' }} />
+                   <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1e293b' }}>Pro</h3>
+                   <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Tienda + Agenda + Estadísticas.</p>
+                 </div>
+                 
+                 <div style={estilos.planCard(planSeleccionado === 'advance')} onClick={() => setPlanSeleccionado('advance')}>
+                   <Crown size={24} color={planSeleccionado === 'advance' ? '#3b82f6' : '#94a3b8'} style={{ marginBottom: '10px' }} />
+                   <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1e293b' }}>Advance</h3>
+                   <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Todo ilimitado + Dominio propio.</p>
+                 </div>
+               </div>
+            </div>
+
             {/* COLUMNA 1: Datos e Identidad */}
             <div>
               <div style={estilos.sectionTitle}><Building2 size={16} color="#4f46e5" /> Identidad de la Empresa</div>
@@ -224,7 +254,8 @@ function GestionEmpresas() {
                 </div>
               </div>
 
-              <div style={{...estilos.sectionTitle, marginTop: '25px'}}><CheckCircle size={16} color="#f59e0b" /> Módulos Activos</div>
+              <div style={{...estilos.sectionTitle, marginTop: '25px'}}><CheckCircle size={16} color="#f59e0b" /> Configuración de Módulos (Features)</div>
+              <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '10px' }}>Enciende o apaga funciones según el plan contratado.</p>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <label style={{ ...estilos.checkboxContainer, borderColor: usaInventario ? '#3b82f6' : '#e2e8f0', background: usaInventario ? '#eff6ff' : 'white' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}><Store size={16} color={usaInventario ? "#3b82f6" : "#94a3b8"} /> Tienda</div>
@@ -259,6 +290,7 @@ function GestionEmpresas() {
                 <tr>
                   <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>ID Sistema (UUID)</th>
                   <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Empresa</th>
+                  <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Plan</th>
                   <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Estado</th>
                   <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>Acción</th>
                 </tr>
@@ -281,6 +313,16 @@ function GestionEmpresas() {
                       {emp.rut && <span style={{ fontSize: '11px', color: '#94a3b8' }}>RUT: {emp.rut}</span>}
                     </div>
                       </div>
+                    </td>
+                    <td style={{ padding: '12px 15px' }}>
+                      <span style={{ 
+                        padding: '4px 10px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase',
+                        background: emp.plan === 'advance' ? '#1e293b' : emp.plan === 'pro' ? '#eff6ff' : '#f1f5f9',
+                        color: emp.plan === 'advance' ? '#fbbf24' : emp.plan === 'pro' ? '#2563eb' : '#64748b',
+                        border: emp.plan === 'pro' ? '1px solid #bfdbfe' : '1px solid transparent'
+                      }}>
+                        {emp.plan || 'BÁSICO'}
+                      </span>
                     </td>
                     <td style={{ padding: '12px 15px' }}>
                       <span style={{ 

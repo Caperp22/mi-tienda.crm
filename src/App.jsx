@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, LogOut, DollarSign } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 
@@ -125,6 +125,8 @@ function App() {
   const [ingresosGlobales, setIngresosGlobales] = useState(0);
   const [totalEmpresas, setTotalEmpresas] = useState(0);
   const [totalAdmins, setTotalAdmins] = useState(0);
+  const [totalClientes, setTotalClientes] = useState(0);
+  const [metricasPlanes, setMetricasPlanes] = useState({ basico: 0, pro: 0, advance: 0 });
 
   const manejarClickPedidos = () => { setNotificacionesAdmin(0); setRefreshPedidos(prev => prev + 1); };
   const manejarClickCitas = () => { setNotifCitasAdmin(0); setRefreshCitas(prev => prev + 1); };
@@ -206,11 +208,21 @@ function App() {
           setIngresosGlobales(sumaTotal);
         }
 
-        const { count: countEmp } = await supabase.from('empresas').select('*', { count: 'exact', head: true });
-        setTotalEmpresas(countEmp || 0);
+        const { data: dataEmp } = await supabase.from('empresas').select('plan');
+        if (dataEmp) {
+          setTotalEmpresas(dataEmp.length);
+          setMetricasPlanes({
+            basico: dataEmp.filter(e => e.plan === 'básico').length,
+            pro: dataEmp.filter(e => e.plan === 'pro').length,
+            advance: dataEmp.filter(e => e.plan === 'advance').length
+          });
+        }
 
         const { count: countAdm } = await supabase.from('administradores').select('*', { count: 'exact', head: true }).eq('rol', 'admin');
         setTotalAdmins(countAdm || 0);
+
+        const { count: countCli } = await supabase.from('clientes').select('*', { count: 'exact', head: true });
+        setTotalClientes(countCli || 0);
       }
       obtenerEstadisticasGlobales();
     }
@@ -265,7 +277,7 @@ function App() {
                 <h1 style={{ fontSize: '28px', color: '#0f172a', marginBottom: '10px', fontWeight: '800' }}>Dashboard General del SaaS</h1>
                 <p style={{ color: '#64748b', marginBottom: '40px' }}>Visión general de todas las empresas operando en tu plataforma.</p>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
                   {/* TARJETA NUEVA: INGRESOS GLOBALES */}
                   <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                     <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#dcfce3', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
@@ -293,7 +305,39 @@ function App() {
                 <p style={{ margin: 0, color: '#d97706', fontSize: '24px', fontWeight: '900' }}>{totalAdmins} Administradores</p>
                 <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Usuarios gestionando sus tiendas.</p>
                   </div>
+
+                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#f3e8ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                      <Activity size={24} />
+                    </div>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Consumidores Red</h3>
+                    <p style={{ margin: 0, color: '#7c3aed', fontSize: '24px', fontWeight: '900' }}>{totalClientes}</p>
+                    <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Clientes finales registrados en todo el SaaS.</p>
+                  </div>
                 </div>
+
+                {/* MÉTRICAS DE PLANES (TIERS) */}
+                <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
+                  <div style={{ background: 'white', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                     <div>
+                       <p style={{ margin: 0, color: '#64748b', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase' }}>Plan Básico</p>
+                       <p style={{ margin: '5px 0 0 0', fontSize: '24px', fontWeight: '800', color: '#1e293b' }}>{metricasPlanes.basico}</p>
+                     </div>
+                  </div>
+                  <div style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)', padding: '20px', borderRadius: '12px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(59, 130, 246, 0.3)' }}>
+                     <div>
+                       <p style={{ margin: 0, color: '#bfdbfe', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase' }}>Plan Pro</p>
+                       <p style={{ margin: '5px 0 0 0', fontSize: '24px', fontWeight: '800' }}>{metricasPlanes.pro}</p>
+                     </div>
+                  </div>
+                  <div style={{ background: 'linear-gradient(to right, #0f172a, #1e293b)', padding: '20px', borderRadius: '12px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #334155' }}>
+                     <div>
+                       <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase' }}>Plan Advance <Crown size={14} style={{ display: 'inline', color: '#fbbf24' }} /></p>
+                       <p style={{ margin: '5px 0 0 0', fontSize: '24px', fontWeight: '800' }}>{metricasPlanes.advance}</p>
+                     </div>
+                  </div>
+                </div>
+
 
                 {/* GRÁFICA GLOBAL */}
                 <div style={{ marginTop: '30px', background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
