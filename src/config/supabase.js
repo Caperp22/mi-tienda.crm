@@ -4,5 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Creamos la conexión oficial
+// Cliente principal — mantiene la sesión del usuario activo
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Cliente auxiliar sin persistencia de sesión.
+// Úsalo para crear cuentas de terceros (signUp de empresas)
+// sin afectar la sesión del superadmin.
+export const supabaseNoSession = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+});

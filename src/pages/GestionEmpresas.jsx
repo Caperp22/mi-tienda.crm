@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../config/supabase';
+import { supabase, supabaseNoSession } from '../config/supabase';
 import Swal from 'sweetalert2';
 import {
   Building2, Plus, Store, Calendar, Palette, Image as ImageIcon, Clock,
