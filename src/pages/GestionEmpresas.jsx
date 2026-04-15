@@ -243,7 +243,7 @@ useEffect(() => { cargar(); }, [cargar]);
       const { error: ea } = await supabase.from('administradores').insert([{ email, rol: 'admin', empresa_id: nueva.id }]);
       if (ea && ea.code !== '23505') throw ea;
       // Crear cuenta en Supabase Auth con la licencia como contraseña
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabaseNoSession.auth.signUp({
         email, password: licencia,
       });
 
