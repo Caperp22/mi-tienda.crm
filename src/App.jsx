@@ -341,10 +341,21 @@ function App() {
 
   // --- MUNDO SUPER ADMINISTRADOR (TÚ) ---
   if (rol === 'superadmin') {
+    const d = esTemaOscuro;
+    const sa = {
+      page:        d ? '#060d1a'                    : '#f8fafc',
+      topbar:      d ? '#0a1020'                    : 'white',
+      topbarBorder:d ? 'rgba(255,255,255,0.06)'     : '#e2e8f0',
+      card:        d ? 'rgba(255,255,255,0.04)'     : 'white',
+      cardBorder:  d ? 'rgba(255,255,255,0.08)'     : '#e2e8f0',
+      text:        d ? '#f0f4ff'                    : '#0f172a',
+      sub:         d ? '#94a3b8'                    : '#64748b',
+      muted:       d ? '#475569'                    : '#94a3b8',
+    };
     return (
-      <div className="superadmin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
+      <div className="superadmin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0, height: '100vh', overflow: 'hidden' }}>
         {/* ── Sidebar SuperAdmin ─────────────────────────────────── */}
-        <div style={{ width: '240px', background: 'linear-gradient(180deg,#060d1a 0%,#0f172a 100%)', color: 'white', minHeight: '100vh', flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="sa-sidebar" style={{ width: '240px', background: 'linear-gradient(180deg,#060d1a 0%,#0f172a 100%)', color: 'white', height: '100vh', flexShrink: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           {/* Header */}
           <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
             <div style={{ width: '48px', height: '48px', borderRadius: '13px', background: 'linear-gradient(135deg,#38bdf8,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', boxShadow: '0 0 20px #38bdf840' }}>
@@ -405,12 +416,12 @@ function App() {
           </div>
         </div>
 
-        <div style={{ flex: 1, background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, background: sa.page, height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', transition: 'background 0.2s' }}>
           {/* Topbar */}
-          <div style={{ background: 'white', padding: '12px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+          <div style={{ background: sa.topbar, padding: '12px 32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sa.topbarBorder}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'background 0.2s' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }} />
-              <span style={{ fontSize: '12px', color: '#64748b' }}>Sistema operativo</span>
+              <span style={{ fontSize: '12px', color: sa.sub }}>Sistema operativo</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {notifUpgrades > 0 && (
@@ -430,93 +441,62 @@ function App() {
             </div>
           </div>
           
-          <div style={{ padding: '40px', flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '16px 24px', flex: 1, overflowY: 'auto', minHeight: 0 }}>
             {vistaSuperAdmin === 'dashboard' && (
-              <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-                <h1 style={{ fontSize: '28px', color: '#0f172a', marginBottom: '10px', fontWeight: '800' }}>Dashboard General del SaaS</h1>
-                <p style={{ color: '#64748b', marginBottom: '40px' }}>Visión general de todas las empresas operando en tu plataforma.</p>
-                
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px' }}>
-                  {/* TARJETA NUEVA: INGRESOS GLOBALES */}
-                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#dcfce3', color: '#16a34a', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                      <DollarSign size={24} />
-                    </div>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Ingresos de la Red</h3>
-                    <p style={{ margin: 0, color: '#10b981', fontSize: '24px', fontWeight: '900' }}>${ingresosGlobales.toLocaleString()}</p>
-                    <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Total procesado por todas las tiendas.</p>
-                  </div>
-
-                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#e0f2fe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                      <Building2 size={24} />
-                    </div>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Gestión de Empresas</h3>
-                <p style={{ margin: 0, color: '#3b82f6', fontSize: '24px', fontWeight: '900' }}>{totalEmpresas} Inquilinos</p>
-                <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Empresas activas en la plataforma.</p>
-                  </div>
-                  
-                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                      <Users size={24} />
-                    </div>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Cuentas de Acceso</h3>
-                <p style={{ margin: 0, color: '#d97706', fontSize: '24px', fontWeight: '900' }}>{totalAdmins} Administradores</p>
-                <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Usuarios gestionando sus tiendas.</p>
-                  </div>
-
-                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#f3e8ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
-                      <Activity size={24} />
-                    </div>
-                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Consumidores Red</h3>
-                    <p style={{ margin: 0, color: '#7c3aed', fontSize: '24px', fontWeight: '900' }}>{totalClientes}</p>
-                    <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Clientes finales registrados en todo el SaaS.</p>
-                  </div>
+              <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+                {/* Título compacto */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '14px' }}>
+                  <h1 style={{ fontSize: '20px', color: sa.text, margin: 0, fontWeight: '800' }}>Dashboard General</h1>
+                  <span style={{ fontSize: '12px', color: sa.sub }}>Visión global de tu plataforma SaaS</span>
                 </div>
 
-                {/* MÉTRICAS DE PLANES (TIERS) */}
-                <div style={{ marginTop: '30px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px' }}>
-                  <div style={{ background: 'white', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                     <div>
-                       <p style={{ margin: 0, color: '#64748b', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase' }}>Plan Básico</p>
-                       <p style={{ margin: '5px 0 0 0', fontSize: '24px', fontWeight: '800', color: '#1e293b' }}>{metricasPlanes.basico}</p>
-                     </div>
-                  </div>
-                  <div style={{ background: 'linear-gradient(to right, #3b82f6, #2563eb)', padding: '20px', borderRadius: '12px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 6px rgba(59, 130, 246, 0.3)' }}>
-                     <div>
-                       <p style={{ margin: 0, color: '#bfdbfe', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase' }}>Plan Pro</p>
-                       <p style={{ margin: '5px 0 0 0', fontSize: '24px', fontWeight: '800' }}>{metricasPlanes.pro}</p>
-                     </div>
-                  </div>
-                  <div style={{ background: 'linear-gradient(to right, #0f172a, #1e293b)', padding: '20px', borderRadius: '12px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #334155' }}>
-                     <div>
-                       <p style={{ margin: 0, color: '#94a3b8', fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase' }}>Plan Advance <Crown size={14} style={{ display: 'inline', color: '#fbbf24' }} /></p>
-                       <p style={{ margin: '5px 0 0 0', fontSize: '24px', fontWeight: '800' }}>{metricasPlanes.advance}</p>
-                     </div>
-                  </div>
+                {/* Fila superior: 4 KPIs + 3 planes en la misma fila */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr) repeat(3,auto)', gap: '10px', marginBottom: '12px' }}>
+                  {[
+                    { label: 'Ingresos',      valor: `$${ingresosGlobales.toLocaleString()}`, color: '#10b981', iconBg: d ? '#10b98120' : '#dcfce3', ico: <DollarSign size={18} /> },
+                    { label: 'Empresas',      valor: totalEmpresas,                           color: '#3b82f6', iconBg: d ? '#3b82f620' : '#e0f2fe', ico: <Building2 size={18} /> },
+                    { label: 'Admins',        valor: totalAdmins,                             color: '#d97706', iconBg: d ? '#d9770620' : '#fef3c7', ico: <Users size={18} /> },
+                    { label: 'Clientes',      valor: totalClientes,                           color: '#7c3aed', iconBg: d ? '#7c3aed20' : '#f3e8ff', ico: <Activity size={18} /> },
+                  ].map(({ label, valor, color, iconBg, ico }) => (
+                    <div key={label} style={{ background: sa.card, padding: '14px 16px', borderRadius: '10px', border: `1px solid ${sa.cardBorder}`, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: iconBg, color, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ico}</div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: '11px', color: sa.sub, fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.4px' }}>{label}</p>
+                        <p style={{ margin: 0, color, fontSize: '18px', fontWeight: '900', lineHeight: 1.1 }}>{valor}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {/* Planes inline */}
+                  {[
+                    { label: 'Básico', valor: metricasPlanes.basico, bg: sa.card, border: sa.cardBorder, color: sa.text, sub: sa.sub },
+                    { label: 'Pro',    valor: metricasPlanes.pro,    bg: 'linear-gradient(135deg,#3b82f6,#2563eb)', border: 'transparent', color: 'white', sub: '#bfdbfe' },
+                    { label: 'Advance',valor: metricasPlanes.advance,bg: 'linear-gradient(135deg,#0f172a,#1e293b)', border: '#334155', color: 'white', sub: '#94a3b8', crown: true },
+                  ].map(({ label, valor, bg, border, color, sub, crown }) => (
+                    <div key={label} style={{ background: bg, padding: '14px 18px', borderRadius: '10px', border: `1px solid ${border}`, minWidth: '90px', textAlign: 'center' }}>
+                      <p style={{ margin: 0, fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', color: sub, letterSpacing: '0.5px' }}>
+                        {label} {crown && <Crown size={10} style={{ display: 'inline', color: '#fbbf24' }} />}
+                      </p>
+                      <p style={{ margin: '4px 0 0', fontSize: '22px', fontWeight: '900', color }}>{valor}</p>
+                    </div>
+                  ))}
                 </div>
 
-
-                {/* GRÁFICA GLOBAL */}
-                <div style={{ marginTop: '30px', background: 'white', padding: '30px', borderRadius: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-                  <h2 style={{ fontSize: '20px', color: '#1e293b', margin: '0 0 20px 0' }}>Volumen de Ventas de la Red (Todas las Tiendas)</h2>
-                  
+                {/* Gráfica — altura reducida */}
+                <div style={{ background: sa.card, padding: '16px 20px', borderRadius: '12px', border: `1px solid ${sa.cardBorder}` }}>
+                  <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: '700', color: sa.text }}>Volumen de Ventas — Todas las Tiendas</p>
                   {datosGlobales.length === 0 ? (
-                    <p style={{ color: '#64748b', textAlign: 'center', padding: '40px 0' }}>Aún no hay pedidos entregados para generar la gráfica.</p>
+                    <p style={{ color: sa.sub, textAlign: 'center', padding: '30px 0', fontSize: '13px' }}>Aún no hay pedidos entregados para generar la gráfica.</p>
                   ) : (
-                    <div style={{ width: '100%', height: '350px' }}>
+                    <div style={{ width: '100%', height: '200px' }}>
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={datosGlobales} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                          <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 13 }} tickFormatter={(val) => `$${val}`} dx={-5} />
-                          <Tooltip 
-                            cursor={{ fill: '#f8fafc' }}
-                            contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)', fontWeight: 'bold', color: '#1e293b' }}
-                            formatter={(value) => [`$${value}`, 'Ingresos Globales']}
-                          />
-                          <Bar dataKey="ventas" fill="#10b981" radius={[6, 6, 0, 0]} barSize={40} />
+                        <BarChart data={datosGlobales} margin={{ top: 4, right: 10, left: -20, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={d ? 'rgba(255,255,255,0.06)' : '#e2e8f0'} />
+                          <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: sa.sub, fontSize: 11 }} dy={8} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fill: sa.sub, fontSize: 11 }} tickFormatter={v => `$${v}`} dx={-5} />
+                          <Tooltip cursor={{ fill: d ? 'rgba(255,255,255,0.04)' : '#f8fafc' }}
+                            contentStyle={{ borderRadius: '8px', border: `1px solid ${sa.cardBorder}`, background: sa.card, color: sa.text, fontSize: '12px' }}
+                            formatter={v => [`$${v}`, 'Ingresos']} />
+                          <Bar dataKey="ventas" fill="#10b981" radius={[4, 4, 0, 0]} barSize={28} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

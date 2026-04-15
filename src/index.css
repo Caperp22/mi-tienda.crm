@@ -134,3 +134,72 @@ body {
     padding: 20px 15px !important;
   }
 }
+
+/* =========================================================
+   SUPERADMIN — RESPONSIVE
+   ========================================================= */
+
+/* Tablet (768px – 1024px): sidebar más angosto */
+@media screen and (max-width: 1024px) {
+  .sa-sidebar {
+    width: 180px !important;
+  }
+}
+
+/* Mobile (< 768px): sidebar se convierte en barra inferior */
+@media screen and (max-width: 767px) {
+  .superadmin-container {
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .sa-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    padding: 8px 6px !important;
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+  }
+
+  /* Oculta el header y footer del sidebar en mobile */
+  .sa-sidebar > div:first-child,
+  .sa-sidebar > div:last-child {
+    display: none !important;
+  }
+
+  /* La nav se pone horizontal */
+  .sa-sidebar nav {
+    display: flex !important;
+    flex-direction: row !important;
+    padding: 0 !important;
+    overflow-x: auto !important;
+    gap: 4px !important;
+    width: 100% !important;
+  }
+
+  /* Grupos inline */
+  .sa-sidebar nav > div {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    margin: 0 !important;
+  }
+
+  /* Etiquetas de grupo ocultas en mobile */
+  .sa-sidebar nav p {
+    display: none !important;
+  }
+
+  /* Items de nav más compactos */
+  .sa-sidebar nav > div > div {
+    margin: 0 !important;
+    border-left: none !important;
+    border-bottom: 3px solid transparent !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    white-space: nowrap !important;
+  }
+}
