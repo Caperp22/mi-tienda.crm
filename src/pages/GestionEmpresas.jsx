@@ -242,16 +242,44 @@ useEffect(() => { cargar(); }, [cargar]);
       const nueva = data[0];
       const { error: ea } = await supabase.from('administradores').insert([{ email, rol: 'admin', empresa_id: nueva.id }]);
       if (ea && ea.code !== '23505') throw ea;
-      // Crear cuenta de acceso con la licencia como contraseña inicial
-      await supabase.auth.signUp({ email, password: licencia });
-      const url = `${window.location.origin}/?tienda=${nueva.id}`;
-      Swal.fire({ title: '¡Empresa creada!', width: 560, icon: 'success', confirmButtonColor: '#7c3aed', confirmButtonText: 'Perfecto',
-        html: `<div style="text-align:left;font-size:12px;display:flex;flex-direction:column;gap:8px;">
-          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;"><b style="color:#15803d">✅ Magic link enviado a ${email}</b></div>
-          <div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;padding:10px 14px;"><p style="margin:0 0 4px;font-weight:700;color:#6d28d9">🔑 Licencia</p><code style="font-size:14px;color:#7c3aed;letter-spacing:2px">${licencia}</code></div>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;"><p style="margin:0 0 4px;font-weight:700;color:#1e293b">🌐 Enlace tienda</p><code style="font-size:11px;color:#3b82f6;word-break:break-all">${url}</code></div>
-        </div>`,
+      // Crear cuenta en Supabase Auth con la licencia como contraseña
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email, password: licencia,
       });
+
+      // Si el usuario ya existía en Auth (correo previo), signUp devuelve
+      // identities:[] sin error real — la contraseña NO se actualiza.
+      const yaExistia = !authError && authData?.user?.identities?.length === 0;
+
+      if (authError) {
+        // Error real de Supabase al crear la cuenta
+        Swal.fire('Empresa creada, pero hubo un problema con la cuenta de acceso',
+          `La empresa quedó registrada en el sistema, pero no se pudo crear la cuenta de login.\n\nError: ${authError.message}\n\nPuede intentar recrear el acceso desde el panel de Supabase.`,
+          'warning');
+      } else {
+        const url = `${window.location.origin}/?tienda=${nueva.id}`;
+        Swal.fire({ title: yaExistia ? '⚠️ Empresa creada — Revisar acceso' : '✅ Empresa creada', width: 580, icon: yaExistia ? 'warning' : 'success', confirmButtonColor: '#7c3aed', confirmButtonText: 'Entendido',
+          html: `<div style="text-align:left;font-size:12px;display:flex;flex-direction:column;gap:10px;">
+
+            ${yaExistia ? `<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;">
+              <p style="margin:0 0 4px;font-weight:700;color:#92400e;font-size:13px;">⚠️ El correo ya tenía una cuenta en Supabase</p>
+              <p style="margin:0;color:#78350f;font-size:12px;line-height:1.6;">La contraseña <b>no se actualizó</b> porque el correo ya existía. El admin debe ingresar con su contraseña anterior, o ve a <b>Supabase → Authentication → Users</b>, elimina ese usuario y vuelve a crear la empresa.</p>
+            </div>` : ''}
+
+            <div style="background:#faf5ff;border:1px solid #ddd6fe;border-radius:8px;padding:12px 14px;">
+              <p style="margin:0 0 6px;font-weight:700;color:#6d28d9;font-size:13px;">🔑 Licencia generada</p>
+              <code style="font-size:16px;color:#7c3aed;letter-spacing:3px;font-weight:700">${licencia}</code>
+              <p style="margin:6px 0 0;color:#7c3aed;font-size:11px;">${yaExistia ? 'Guardada en BD, pero no aplicada como contraseña.' : 'Contraseña de acceso al panel administrativo.'}</p>
+            </div>
+
+            <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:10px 14px;">
+              <p style="margin:0 0 2px;font-weight:700;color:#0369a1;font-size:12px;">🌐 URL de la tienda</p>
+              <code style="font-size:10px;color:#0284c7;word-break:break-all">${url}</code>
+            </div>
+
+          </div>`,
+        });
+      }
       setNombre(''); setRut(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro'));
       setColor('#3b82f6'); setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setPaso(1);
       cargar();

@@ -33,10 +33,13 @@ function Login() {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       setCargando(false);
       if (error) {
+        const sinConfirmar = error.message?.toLowerCase().includes('email not confirmed');
         Swal.fire({
-          title: 'Acceso denegado',
-          text: 'Correo o contraseña/licencia incorrectos.',
-          icon: 'error', confirmButtonColor: VIOLET,
+          title: sinConfirmar ? 'Correo sin confirmar' : 'Acceso denegado',
+          html: sinConfirmar
+            ? `<p style="font-size:14px;color:#64748b;margin:0">El administrador debe hacer clic en el <b>enlace de confirmación</b> que recibió por correo antes de poder ingresar.<br><br>Si no lo encuentras, revisa la carpeta de spam.</p>`
+            : `<p style="font-size:14px;color:#64748b;margin:0">Correo o contraseña/licencia incorrectos.<br><small style="color:#94a3b8">Error: ${error.message}</small></p>`,
+          icon: 'warning', confirmButtonColor: VIOLET,
         });
       } else setOk(true);
       return;
