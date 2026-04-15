@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { LayoutDashboard, Building2, Users, LogOut } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 import { supabase } from './config/supabase';
@@ -180,25 +181,65 @@ function App() {
   if (rol === 'superadmin') {
     return (
       <div className="superadmin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
-        {/* Podrías hacer un SidebarSuperAdmin específico */}
-        <div style={{ width: '250px', background: '#1e293b', color: 'white', minHeight: '100vh', padding: '20px' }}>
-          <h2>Súper CRM</h2>
-          <ul style={{ listStyle: 'none', padding: 0, marginTop: '30px' }}>
-             <li style={{ marginBottom: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'dashboard' ? '#38bdf8' : 'white' }} onClick={() => setVistaSuperAdmin('dashboard')}>🚀 Dashboard Global</li>
-             <li style={{ marginBottom: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'empresas' ? '#38bdf8' : 'white' }} onClick={() => setVistaSuperAdmin('empresas')}>🏢 Gestión de Empresas</li>
-             <li style={{ marginBottom: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'admins' ? '#38bdf8' : 'white' }} onClick={() => setVistaSuperAdmin('admins')}>👥 Admins de Empresas</li>
-             <li style={{ marginBottom: '15px', color: '#f87171', cursor: 'pointer' }} onClick={cerrarSesion}>Cerrar Sesión</li>
-          </ul>
-        </div>
-        <div style={{ flex: 1, padding: '40px', background: '#f1f5f9' }}>
-          {vistaSuperAdmin === 'dashboard' && (
-            <div>
-              <h1 style={{color: '#0f172a'}}>Panel de Control Global</h1>
-              <p style={{color: '#475569'}}>Bienvenido. Aquí podrás crear nuevas empresas, suspender clientes por falta de pago y ver métricas generales del SaaS.</p>
+        {/* Sidebar SuperAdmin */}
+        <div style={{ width: '260px', background: '#0f172a', color: 'white', minHeight: '100vh', padding: '20px 0', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '0 20px', marginBottom: '40px', textAlign: 'center', marginTop: '10px' }}>
+            <h2 style={{ color: '#38bdf8', fontSize: '24px', margin: 0, letterSpacing: '1px' }}>SúperAdmin</h2>
+            <p style={{ color: '#94a3b8', fontSize: '13px', margin: '5px 0 0 0' }}>Panel de Control SaaS</p>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            <div onClick={() => setVistaSuperAdmin('dashboard')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'dashboard' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'dashboard' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'dashboard' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
+              <LayoutDashboard size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'dashboard' ? 'bold' : 'normal' }}>Dashboard Global</span>
             </div>
-          )}
-          {vistaSuperAdmin === 'empresas' && <GestionEmpresas />}
-          {vistaSuperAdmin === 'admins' && <GestionAdminsGlobal />}
+            <div onClick={() => setVistaSuperAdmin('empresas')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'empresas' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'empresas' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'empresas' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
+              <Building2 size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'empresas' ? 'bold' : 'normal' }}>Empresas (Inquilinos)</span>
+            </div>
+            <div onClick={() => setVistaSuperAdmin('admins')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'admins' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'admins' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'admins' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
+              <Users size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'admins' ? 'bold' : 'normal' }}>Cuentas de Admins</span>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 'auto', padding: '20px', width: '260px', boxSizing: 'border-box' }}>
+             <button onClick={cerrarSesion} style={{ width: '100%', padding: '12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px', fontWeight: 'bold', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#dc2626'} onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
+               <LogOut size={18} /> Cerrar Sesión
+             </button>
+          </div>
+        </div>
+
+        <div style={{ flex: 1, background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: 'white', padding: '15px 40px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
+             <span style={{ fontWeight: 'bold', color: '#64748b' }}>Sesión activa: {usuario.email}</span>
+          </div>
+          
+          <div style={{ padding: '40px', flex: 1, overflowY: 'auto' }}>
+            {vistaSuperAdmin === 'dashboard' && (
+              <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+                <h1 style={{ fontSize: '28px', color: '#0f172a', marginBottom: '10px', fontWeight: '800' }}>Dashboard General del SaaS</h1>
+                <p style={{ color: '#64748b', marginBottom: '40px' }}>Visión general de todas las empresas operando en tu plataforma.</p>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#e0f2fe', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                      <Building2 size={24} />
+                    </div>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Gestión de Empresas</h3>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px', lineHeight: '1.5' }}>Da de alta a nuevos clientes, configura sus módulos (Tienda/Agenda) y personaliza su imagen corporativa.</p>
+                  </div>
+                  
+                  <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                    <div style={{ width: '50px', height: '50px', borderRadius: '10px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px' }}>
+                      <Users size={24} />
+                    </div>
+                    <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Cuentas de Acceso</h3>
+                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px', lineHeight: '1.5' }}>Enlaza los correos electrónicos de los dueños de negocios a sus respectivas empresas para que puedan operar de forma aislada.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+            {vistaSuperAdmin === 'empresas' && <GestionEmpresas />}
+            {vistaSuperAdmin === 'admins' && <GestionAdminsGlobal />}
+          </div>
         </div>
       </div>
     );
