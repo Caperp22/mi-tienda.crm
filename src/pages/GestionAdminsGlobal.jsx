@@ -89,11 +89,11 @@ function GestionAdminsGlobal() {
   }
 
   const estilos = {
-    card: { background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '30px' },
-    input: { width: '100%', padding: '12px 15px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', boxSizing: 'border-box', background: '#f8fafc' },
-    btnPrimary: { padding: '12px 24px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s' },
-    th: { padding: '15px 20px', background: '#f8fafc', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0', textAlign: 'left' },
-    td: { padding: '15px 20px', fontSize: '14px', borderBottom: '1px solid #f1f5f9', color: '#334155' }
+    card: { background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '30px' },
+    input: { width: '100%', padding: '10px 12px 10px 35px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box', background: '#f8fafc' },
+    btnPrimary: { padding: '10px 20px', background: '#4f46e5', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'background 0.2s', height: '38px' },
+    th: { padding: '12px 15px', background: '#f8fafc', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0', textAlign: 'left' },
+    td: { padding: '12px 15px', fontSize: '13px', borderBottom: '1px solid #f1f5f9', color: '#334155' }
   };
 
   return (
@@ -108,31 +108,31 @@ function GestionAdminsGlobal() {
         <h3 style={{ margin: '0 0 15px 0', fontSize: '18px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <UserPlus size={20} color="#4f46e5" /> Asignar nuevo administrador
         </h3>
-        <form onSubmit={enlazarAdmin} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#475569', marginBottom: '5px' }}>Correo Electrónico</label>
+        <form onSubmit={enlazarAdmin} style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '5px' }}>Correo Electrónico</label>
             <div style={{ position: 'relative' }}>
-              <Mail size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '14px' }} />
+              <Mail size={14} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '12px' }} />
               <input 
                 type="email" 
                 placeholder="dueño@negocio.com" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                style={{ ...estilos.input, paddingLeft: '38px', background: 'white' }}
+                style={{ ...estilos.input, background: 'white' }}
               />
             </div>
           </div>
           
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#475569', marginBottom: '5px' }}>Empresa (Inquilino)</label>
+          <div style={{ flex: 1, minWidth: '200px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#475569', marginBottom: '5px' }}>Empresa (Inquilino)</label>
             <div style={{ position: 'relative' }}>
-              <Building size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '14px' }} />
+              <Building size={14} color="#94a3b8" style={{ position: 'absolute', left: '10px', top: '12px' }} />
               <select 
                 value={empresaId} 
                 onChange={(e) => setEmpresaId(e.target.value)} 
                 required
-                style={{ ...estilos.input, paddingLeft: '38px', background: 'white', cursor: 'pointer' }}
+                style={{ ...estilos.input, background: 'white', cursor: 'pointer' }}
               >
                 <option value="">-- Seleccionar --</option>
                 {empresas.map(emp => (
@@ -142,8 +142,8 @@ function GestionAdminsGlobal() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '2px' }}>
-            <button type="submit" style={{ ...estilos.btnPrimary, height: '45px', marginTop: '22px' }}>
+          <div style={{ flex: '0 0 auto' }}>
+            <button type="submit" style={{ ...estilos.btnPrimary }}>
               Enlazar Cuenta
             </button>
           </div>
@@ -173,26 +173,26 @@ function GestionAdminsGlobal() {
                   <tr key={admin.id} style={{ transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={estilos.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
                           <UserPlus size={16} />
                         </div>
                         <span style={{ fontWeight: '600' }}>{admin.email}</span>
                       </div>
                     </td>
                     <td style={estilos.td}>
-                      <span style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <Building size={14} color="#64748b" /> {admin.empresas?.nombre || 'Empresa Eliminada'}
+                      <span style={{ background: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Building size={12} color="#64748b" /> {admin.empresas?.nombre || 'Empresa Eliminada'}
                       </span>
                     </td>
                     <td style={{ ...estilos.td, textAlign: 'center' }}>
                       <button 
                         onClick={() => revocarAcceso(admin.id, admin.email)}
-                        style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 'bold', transition: 'all 0.2s' }}
+                        style={{ background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 'bold', transition: 'all 0.2s' }}
                         title="Revocar Acceso"
                         onMouseEnter={e => e.currentTarget.style.background = '#fee2e2'}
                         onMouseLeave={e => e.currentTarget.style.background = '#fef2f2'}
                       >
-                        <Trash2 size={16} /> Revocar
+                        <Trash2 size={14} /> Revocar
                       </button>
                     </td>
                   </tr>

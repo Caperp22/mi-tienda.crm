@@ -107,13 +107,13 @@ function GestionEmpresas() {
   }
 
   const estilos = {
-    card: { background: 'white', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '30px' },
-    sectionTitle: { fontSize: '16px', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' },
-    input: { width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', boxSizing: 'border-box', background: '#f8fafc' },
-    label: { display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#475569', marginBottom: '5px' },
-    formGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '25px' },
-    checkboxContainer: { display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '15px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#f8fafc', cursor: 'pointer', transition: 'border 0.2s' },
-    btnPrimary: { width: '100%', padding: '14px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'background 0.2s' }
+    card: { background: 'white', padding: '25px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '30px' },
+    sectionTitle: { fontSize: '14px', fontWeight: 'bold', color: '#1e293b', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #f1f5f9', paddingBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' },
+    input: { width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box', background: '#f8fafc', transition: 'border-color 0.2s' },
+    label: { display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#64748b', marginBottom: '6px' },
+    formGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' },
+    checkboxContainer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 15px', border: '1px solid #e2e8f0', borderRadius: '8px', background: 'white', cursor: 'pointer', transition: 'all 0.2s', marginBottom: '10px' },
+    btnPrimary: { width: '100%', padding: '12px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', transition: 'background 0.2s', marginTop: '10px' }
   };
 
   return (
@@ -126,66 +126,69 @@ function GestionEmpresas() {
       
       <div style={estilos.card}>
         <form onSubmit={crearEmpresa}>
-          
-          <div style={estilos.sectionTitle}><Building2 size={18} color="#4f46e5" /> Datos Generales</div>
-          <div style={estilos.formGrid}>
-            <div style={{ gridColumn: 'span 2' }}>
-              <label style={estilos.label}>Nombre Comercial del Negocio</label>
-              <input type="text" placeholder="Ej. Pizzería Don Lucio" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{...estilos.input, background: 'white'}} required />
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
+            
+            {/* COLUMNA 1: Datos e Identidad */}
             <div>
-              <label style={estilos.label}>Color Principal (Marca)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', border: '1px solid #cbd5e1', padding: '5px 10px', borderRadius: '8px' }}>
-                <Palette size={16} color="#64748b" />
-                <input type="color" value={colorPrincipal} onChange={(e) => setColorPrincipal(e.target.value)} style={{ border: 'none', width: '30px', height: '30px', cursor: 'pointer', background: 'none', padding: 0 }} />
-                <span style={{ fontSize: '13px', color: '#475569', fontWeight: 'bold', textTransform: 'uppercase' }}>{colorPrincipal}</span>
+              <div style={estilos.sectionTitle}><Building2 size={16} color="#4f46e5" /> Identidad de la Empresa</div>
+              <div style={{ marginBottom: '15px' }}>
+                <label style={estilos.label}>Nombre Comercial del Negocio</label>
+                <input type="text" placeholder="Ej. Pizzería Don Lucio" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{...estilos.input, background: 'white'}} required />
+              </div>
+              
+              <div style={estilos.formGrid}>
+                <div>
+                  <label style={estilos.label}>Color Principal</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', border: '1px solid #cbd5e1', padding: '4px 10px', borderRadius: '6px' }}>
+                    <Palette size={14} color="#64748b" />
+                    <input type="color" value={colorPrincipal} onChange={(e) => setColorPrincipal(e.target.value)} style={{ border: 'none', width: '25px', height: '25px', cursor: 'pointer', background: 'none', padding: 0 }} />
+                    <span style={{ fontSize: '12px', color: '#475569', fontWeight: 'bold', textTransform: 'uppercase' }}>{colorPrincipal}</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={estilos.label}>Logotipo (Opcional)</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', border: '1px solid #cbd5e1', padding: '4px 10px', borderRadius: '6px', overflow: 'hidden' }}>
+                    <ImageIcon size={14} color="#64748b" style={{ flexShrink: 0 }} />
+                    <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} style={{ border: 'none', fontSize: '11px', width: '100%', background: 'transparent', padding: '3px 0' }} />
+                  </div>
+                </div>
               </div>
             </div>
-            <div>
-              <label style={estilos.label}>Logotipo (Opcional)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'white', border: '1px solid #cbd5e1', padding: '5px 10px', borderRadius: '8px', overflow: 'hidden' }}>
-                <ImageIcon size={16} color="#64748b" style={{ flexShrink: 0 }} />
-                <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files[0])} style={{ border: 'none', fontSize: '12px', width: '100%', background: 'transparent' }} />
-              </div>
-            </div>
-          </div>
-        
-          <div style={estilos.sectionTitle}><Clock size={18} color="#10b981" /> Horarios de Atención</div>
-          <div style={estilos.formGrid}>
-            <div>
-              <label style={estilos.label}>Hora de Apertura</label>
-              <input type="time" value={horaApertura} onChange={(e) => setHoraApertura(e.target.value)} style={{...estilos.input, background: 'white'}} required />
-            </div>
-            <div>
-              <label style={estilos.label}>Hora de Cierre</label>
-              <input type="time" value={horaCierre} onChange={(e) => setHoraCierre(e.target.value)} style={{...estilos.input, background: 'white'}} required />
-            </div>
-            <div>
-              <label style={estilos.label}>Intervalo de Citas (Mins)</label>
-              <input type="number" min="5" step="5" value={intervaloCitas} onChange={(e) => setIntervaloCitas(e.target.value)} style={{...estilos.input, background: 'white'}} required />
-            </div>
-          </div>
 
-          <div style={estilos.sectionTitle}><CheckCircle size={18} color="#f59e0b" /> Módulos Activos</div>
-          <div style={estilos.formGrid}>
-            <label style={{ ...estilos.checkboxContainer, borderColor: usaInventario ? '#3b82f6' : '#cbd5e1' }}>
-              <input type="checkbox" checked={usaInventario} onChange={(e) => setUsaInventario(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px' }} />
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}><Store size={16} color="#3b82f6" /> Tienda Física / Productos</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Habilita el inventario y recepción de pedidos.</div>
+            {/* COLUMNA 2: Horarios y Módulos */}
+            <div>
+              <div style={estilos.sectionTitle}><Clock size={16} color="#10b981" /> Configuración de Agenda</div>
+              <div style={estilos.formGrid}>
+                <div>
+                  <label style={estilos.label}>Hora de Apertura</label>
+                  <input type="time" value={horaApertura} onChange={(e) => setHoraApertura(e.target.value)} style={{...estilos.input, background: 'white'}} required />
+                </div>
+                <div>
+                  <label style={estilos.label}>Hora de Cierre</label>
+                  <input type="time" value={horaCierre} onChange={(e) => setHoraCierre(e.target.value)} style={{...estilos.input, background: 'white'}} required />
+                </div>
+                <div style={{ gridColumn: 'span 2' }}>
+                  <label style={estilos.label}>Intervalo de Citas (Mins)</label>
+                  <input type="number" min="5" step="5" value={intervaloCitas} onChange={(e) => setIntervaloCitas(e.target.value)} style={{...estilos.input, background: 'white'}} required />
+                </div>
               </div>
-            </label>
-            <label style={{ ...estilos.checkboxContainer, borderColor: usaCitas ? '#10b981' : '#cbd5e1' }}>
-              <input type="checkbox" checked={usaCitas} onChange={(e) => setUsaCitas(e.target.checked)} style={{ width: '18px', height: '18px', marginTop: '2px' }} />
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '5px' }}><Calendar size={16} color="#10b981" /> Servicios / Agenda</div>
-                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Habilita el calendario para reservar citas.</div>
+
+              <div style={{...estilos.sectionTitle, marginTop: '25px'}}><CheckCircle size={16} color="#f59e0b" /> Módulos Activos</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <label style={{ ...estilos.checkboxContainer, borderColor: usaInventario ? '#3b82f6' : '#e2e8f0', background: usaInventario ? '#eff6ff' : 'white' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}><Store size={16} color={usaInventario ? "#3b82f6" : "#94a3b8"} /> Tienda</div>
+                  <input type="checkbox" checked={usaInventario} onChange={(e) => setUsaInventario(e.target.checked)} style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer' }} />
+                </label>
+                <label style={{ ...estilos.checkboxContainer, borderColor: usaCitas ? '#10b981' : '#e2e8f0', background: usaCitas ? '#ecfdf5' : 'white' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}><Calendar size={16} color={usaCitas ? "#10b981" : "#94a3b8"} /> Agenda</div>
+                  <input type="checkbox" checked={usaCitas} onChange={(e) => setUsaCitas(e.target.checked)} style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer' }} />
+                </label>
               </div>
-            </label>
+            </div>
           </div>
         
           <button type="submit" disabled={cargando} style={{ ...estilos.btnPrimary, opacity: cargando ? 0.7 : 1 }}>
-            <Plus size={20} /> {cargando ? 'Procesando...' : 'Registrar Empresa y Crear Espacio'}
+            <Plus size={18} /> {cargando ? 'Procesando...' : 'Registrar Empresa y Crear Espacio'}
           </button>
         </form>
       </div>
@@ -203,43 +206,43 @@ function GestionEmpresas() {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
                 <tr>
-                  <th style={{ padding: '15px 20px', background: 'white', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>ID Sistema (UUID)</th>
-                  <th style={{ padding: '15px 20px', background: 'white', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Empresa</th>
-                  <th style={{ padding: '15px 20px', background: 'white', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Estado</th>
-                  <th style={{ padding: '15px 20px', background: 'white', color: '#64748b', fontSize: '13px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>Acción</th>
+                  <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>ID Sistema (UUID)</th>
+                  <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Empresa</th>
+                  <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0' }}>Estado</th>
+                  <th style={{ padding: '12px 15px', background: 'white', color: '#64748b', fontSize: '12px', textTransform: 'uppercase', borderBottom: '1px solid #e2e8f0', textAlign: 'center' }}>Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {empresas.map(emp => (
                   <tr key={emp.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '15px 20px', fontSize: '13px', color: '#94a3b8', fontFamily: 'monospace' }}>{emp.id}</td>
-                    <td style={{ padding: '15px 20px' }}>
+                    <td style={{ padding: '12px 15px', fontSize: '12px', color: '#94a3b8', fontFamily: 'monospace' }}>{emp.id}</td>
+                    <td style={{ padding: '12px 15px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         {emp.logo_url ? (
-                          <img src={emp.logo_url} alt="logo" style={{ width: '30px', height: '30px', borderRadius: '6px', objectFit: 'contain', background: '#f1f5f9' }} />
+                          <img src={emp.logo_url} alt="logo" style={{ width: '28px', height: '28px', borderRadius: '6px', objectFit: 'contain', background: '#f1f5f9' }} />
                         ) : (
-                          <div style={{ width: '30px', height: '30px', borderRadius: '6px', background: emp.color_principal || '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '14px' }}>
+                          <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: emp.color_principal || '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 'bold', fontSize: '12px' }}>
                             {emp.nombre.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <span style={{ fontWeight: 'bold', color: '#334155' }}>{emp.nombre}</span>
+                        <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px' }}>{emp.nombre}</span>
                       </div>
                     </td>
-                    <td style={{ padding: '15px 20px' }}>
+                    <td style={{ padding: '12px 15px' }}>
                       <span style={{ 
-                        padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold', display: 'inline-block',
+                        padding: '4px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold', display: 'inline-block',
                         background: emp.estado === 'activa' ? '#dcfce3' : '#fee2e2',
                         color: emp.estado === 'activa' ? '#166534' : '#991b1b'
                       }}>
                         {emp.estado === 'activa' ? '🟢 ACTIVA' : '🔴 INACTIVA'}
                       </span>
                     </td>
-                    <td style={{ padding: '15px 20px', textAlign: 'center' }}>
+                    <td style={{ padding: '12px 15px', textAlign: 'center' }}>
                       <button 
                         onClick={() => cambiarEstado(emp.id, emp.estado)}
-                        style={{ padding: '8px 12px', background: emp.estado === 'activa' ? '#fffbeb' : '#ecfdf5', color: emp.estado === 'activa' ? '#d97706' : '#059669', border: `1px solid ${emp.estado === 'activa' ? '#fde68a' : '#a7f3d0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', margin: '0 auto', transition: 'all 0.2s' }}
+                        style={{ padding: '6px 10px', background: emp.estado === 'activa' ? '#fffbeb' : '#ecfdf5', color: emp.estado === 'activa' ? '#d97706' : '#059669', border: `1px solid ${emp.estado === 'activa' ? '#fde68a' : '#a7f3d0'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', margin: '0 auto', transition: 'all 0.2s' }}
                       >
-                        <Power size={16} /> {emp.estado === 'activa' ? 'Suspender' : 'Activar'}
+                        <Power size={14} /> {emp.estado === 'activa' ? 'Suspender' : 'Activar'}
                       </button>
                     </td>
                   </tr>
