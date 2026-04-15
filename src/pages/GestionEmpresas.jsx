@@ -17,6 +17,17 @@ function GestionEmpresas() {
   const [horaCierre, setHoraCierre] = useState('18:00');
   const [intervaloCitas, setIntervaloCitas] = useState(30);
 
+  // Lógica de reglas de negocio para los Tiers (Suscripciones)
+  function seleccionarPlan(plan) {
+    setPlanSeleccionado(plan);
+    if (plan === 'básico') {
+      setUsaCitas(false); // El plan básico no incluye agenda
+      setUsaInventario(true);
+    } else {
+      setUsaCitas(true); // Planes superiores incluyen ambos por defecto
+    }
+  }
+
   useEffect(() => {
     cargarEmpresas();
   }, []);
@@ -184,20 +195,20 @@ function GestionEmpresas() {
                <div style={estilos.sectionTitle}><Crown size={16} color="#f59e0b" /> Tipo de Suscripción (Portal)</div>
                <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
                  
-                 <div style={estilos.planCard(planSeleccionado === 'básico')} onClick={() => setPlanSeleccionado('básico')}>
+                 <div style={estilos.planCard(planSeleccionado === 'básico')} onClick={() => seleccionarPlan('básico')}>
                    <Zap size={24} color={planSeleccionado === 'básico' ? '#3b82f6' : '#94a3b8'} style={{ marginBottom: '10px' }} />
                    <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1e293b' }}>Básico</h3>
                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Ideal para negocios pequeños.</p>
                  </div>
                  
-                 <div style={estilos.planCard(planSeleccionado === 'pro')} onClick={() => setPlanSeleccionado('pro')}>
+                 <div style={estilos.planCard(planSeleccionado === 'pro')} onClick={() => seleccionarPlan('pro')}>
                    {planSeleccionado === 'pro' && <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#3b82f6', color: 'white', fontSize: '10px', padding: '2px 10px', borderRadius: '10px', fontWeight: 'bold' }}>RECOMENDADO</span>}
                    <Star size={24} color={planSeleccionado === 'pro' ? '#3b82f6' : '#94a3b8'} style={{ marginBottom: '10px' }} />
                    <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1e293b' }}>Pro</h3>
                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Tienda + Agenda + Estadísticas.</p>
                  </div>
                  
-                 <div style={estilos.planCard(planSeleccionado === 'advance')} onClick={() => setPlanSeleccionado('advance')}>
+                 <div style={estilos.planCard(planSeleccionado === 'advance')} onClick={() => seleccionarPlan('advance')}>
                    <Crown size={24} color={planSeleccionado === 'advance' ? '#3b82f6' : '#94a3b8'} style={{ marginBottom: '10px' }} />
                    <h3 style={{ margin: '0 0 5px 0', fontSize: '16px', color: '#1e293b' }}>Advance</h3>
                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>Todo ilimitado + Dominio propio.</p>
@@ -238,19 +249,21 @@ function GestionEmpresas() {
 
             {/* COLUMNA 2: Horarios y Módulos */}
             <div>
-              <div style={estilos.sectionTitle}><Clock size={16} color="#10b981" /> Configuración de Agenda</div>
-              <div style={estilos.formGrid}>
-                <div>
-                  <label style={estilos.label}>Hora de Apertura</label>
-                  <input type="time" value={horaApertura} onChange={(e) => setHoraApertura(e.target.value)} style={{...estilos.input, background: 'white'}} required />
-                </div>
-                <div>
-                  <label style={estilos.label}>Hora de Cierre</label>
-                  <input type="time" value={horaCierre} onChange={(e) => setHoraCierre(e.target.value)} style={{...estilos.input, background: 'white'}} required />
-                </div>
-                <div style={{ gridColumn: 'span 2' }}>
-                  <label style={estilos.label}>Intervalo de Citas (Mins)</label>
-                  <input type="number" min="5" step="5" value={intervaloCitas} onChange={(e) => setIntervaloCitas(e.target.value)} style={{...estilos.input, background: 'white'}} required />
+              <div style={{ opacity: usaCitas ? 1 : 0.4, pointerEvents: usaCitas ? 'auto' : 'none', transition: 'all 0.3s' }}>
+                <div style={estilos.sectionTitle}><Clock size={16} color="#10b981" /> Configuración de Agenda</div>
+                <div style={estilos.formGrid}>
+                  <div>
+                    <label style={estilos.label}>Hora de Apertura</label>
+                    <input type="time" value={horaApertura} onChange={(e) => setHoraApertura(e.target.value)} style={{...estilos.input, background: 'white'}} required={usaCitas} />
+                  </div>
+                  <div>
+                    <label style={estilos.label}>Hora de Cierre</label>
+                    <input type="time" value={horaCierre} onChange={(e) => setHoraCierre(e.target.value)} style={{...estilos.input, background: 'white'}} required={usaCitas} />
+                  </div>
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <label style={estilos.label}>Intervalo de Citas (Mins)</label>
+                    <input type="number" min="5" step="5" value={intervaloCitas} onChange={(e) => setIntervaloCitas(e.target.value)} style={{...estilos.input, background: 'white'}} required={usaCitas} />
+                  </div>
                 </div>
               </div>
 
@@ -261,9 +274,12 @@ function GestionEmpresas() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}><Store size={16} color={usaInventario ? "#3b82f6" : "#94a3b8"} /> Tienda</div>
                   <input type="checkbox" checked={usaInventario} onChange={(e) => setUsaInventario(e.target.checked)} style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer' }} />
                 </label>
-                <label style={{ ...estilos.checkboxContainer, borderColor: usaCitas ? '#10b981' : '#e2e8f0', background: usaCitas ? '#ecfdf5' : 'white' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}><Calendar size={16} color={usaCitas ? "#10b981" : "#94a3b8"} /> Agenda</div>
-                  <input type="checkbox" checked={usaCitas} onChange={(e) => setUsaCitas(e.target.checked)} style={{ width: '16px', height: '16px', margin: 0, cursor: 'pointer' }} />
+                <label style={{ ...estilos.checkboxContainer, borderColor: usaCitas ? '#10b981' : '#e2e8f0', background: planSeleccionado === 'básico' ? '#f1f5f9' : (usaCitas ? '#ecfdf5' : 'white'), opacity: planSeleccionado === 'básico' ? 0.6 : 1, cursor: planSeleccionado === 'básico' ? 'not-allowed' : 'pointer' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 'bold', color: '#1e293b' }}>
+                    <Calendar size={16} color={usaCitas ? "#10b981" : "#94a3b8"} /> Agenda 
+                    {planSeleccionado === 'básico' && <span style={{ fontSize: '10px', background: '#cbd5e1', color: '#475569', padding: '2px 6px', borderRadius: '4px' }}>SOLO PRO</span>}
+                  </div>
+                  <input type="checkbox" checked={usaCitas} disabled={planSeleccionado === 'básico'} onChange={(e) => setUsaCitas(e.target.checked)} style={{ width: '16px', height: '16px', margin: 0, cursor: planSeleccionado === 'básico' ? 'not-allowed' : 'pointer' }} />
                 </label>
               </div>
             </div>
