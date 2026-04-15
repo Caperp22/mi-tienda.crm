@@ -8,12 +8,12 @@ function Login() {
   const [modo, setModo] = useState('cliente'); // 'cliente', 'registro', 'admin'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [licencia, setLicencia] = useState(''); // clave de acceso para admins
   const [nombre, setNombre] = useState('');
   const [direccion, setDireccion] = useState('');
   const [cargando, setCargando] = useState(false);
   const [verContrasena, setVerContrasena] = useState(false);
   const [loginExitoso, setLoginExitoso] = useState(false);
-  const [magicEnviado, setMagicEnviado] = useState(false);
 
   async function manejarAcceso(e) {
     e.preventDefault();
@@ -21,17 +21,17 @@ function Login() {
     setLoginExitoso(false);
     const tiendaActual = localStorage.getItem('tiendaActual');
 
-    // ── MODO ADMIN: enviar magic link ────────────────────────────
+    // ── MODO ADMIN: email + licencia como contraseña ─────────────
     if (modo === 'admin') {
-      const { error } = await supabase.auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
-        options: { emailRedirectTo: window.location.href },
+        password: licencia.trim(),
       });
       setCargando(false);
       if (error) {
-        Swal.fire('Error', error.message, 'error');
+        Swal.fire('Acceso denegado', 'Correo o licencia incorrectos. Verifica los datos proporcionados por tu proveedor.', 'error');
       } else {
-        setMagicEnviado(true);
+        setLoginExitoso(true);
       }
       return;
     }
@@ -88,34 +88,6 @@ function Login() {
     }
   }
 
-  // ── Pantalla de confirmación magic link enviado ───────────────
-  if (magicEnviado) {
-    return (
-      <div style={s.overlay}>
-        <div style={s.card}>
-          <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-              <Mail size={32} color="#16a34a" />
-            </div>
-            <h2 style={{ color: '#1e293b', margin: '0 0 10px' }}>¡Enlace enviado!</h2>
-            <p style={{ color: '#64748b', marginBottom: '8px' }}>
-              Revisa tu correo <strong style={{ color: '#4f46e5' }}>{email}</strong>
-            </p>
-            <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px' }}>
-              Haz clic en el enlace del email para acceder al panel de administración.
-            </p>
-            <button
-              onClick={() => { setMagicEnviado(false); setEmail(''); }}
-              style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px 20px', color: '#64748b', cursor: 'pointer', fontSize: '14px' }}
-            >
-              Volver
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={s.overlay}>
       <div style={s.card}>
@@ -128,7 +100,7 @@ function Login() {
           {modo === 'registro' ? 'Crear Cuenta' : modo === 'admin' ? 'Acceso Administrador' : 'Bienvenido'}
         </h1>
         <p style={{ textAlign: 'center', color: '#64748b', marginBottom: '24px', fontSize: '14px' }}>
-          {modo === 'admin' ? 'Te enviaremos un enlace seguro a tu correo' : modo === 'registro' ? 'Regístrate para comprar en la tienda' : 'Ingresa a tu cuenta'}
+          {modo === 'admin' ? 'Usa el correo y la licencia que te proporcionaron' : modo === 'registro' ? 'Regístrate para comprar en la tienda' : 'Ingresa a tu cuenta'}
         </p>
 
         {/* ── Tabs modo ─────────────────────────────────── */}
@@ -176,7 +148,17 @@ function Login() {
               onChange={e => setEmail(e.target.value)} required style={s.input} />
           </div>
 
-          {modo !== 'admin' && (
+          {modo === 'admin' ? (
+            <div style={s.inputGroup}>
+              <Briefcase style={s.inputIcon} size={18} />
+              <input
+                type="text"
+                placeholder="LIC-XXXX-XXXX-XXXX"
+                value={licencia} onChange={e => setLicencia(e.target.value.toUpperCase())} required
+                style={{ ...s.input, letterSpacing: '1.5px', fontFamily: 'monospace', fontSize: '14px' }}
+              />
+            </div>
+          ) : (
             <div style={{ position: 'relative' }}>
               <input
                 type={verContrasena ? 'text' : 'password'}
@@ -191,18 +173,12 @@ function Login() {
             </div>
           )}
 
-          {modo === 'admin' && (
-            <p style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', margin: '0' }}>
-              Recibirás un enlace de acceso en tu correo. No necesitas contraseña.
-            </p>
-          )}
-
           <button type="submit" disabled={cargando} style={{
             padding: '14px', background: loginExitoso ? '#10b981' : '#4f46e5', color: 'white',
             border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '700',
             cursor: cargando ? 'not-allowed' : 'pointer', transition: 'background 0.3s', marginTop: '4px',
           }}>
-            {cargando ? 'Cargando...' : loginExitoso ? '¡Acceso Concedido!' : modo === 'admin' ? 'Enviar enlace de acceso' : modo === 'registro' ? 'Registrarme' : 'Entrar'}
+            {cargando ? 'Cargando...' : loginExitoso ? '¡Acceso Concedido!' : modo === 'admin' ? 'Ingresar al panel' : modo === 'registro' ? 'Registrarme' : 'Entrar'}
           </button>
         </form>
 

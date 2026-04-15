@@ -244,7 +244,8 @@ function GestionEmpresas() {
       const nueva = data[0];
       const { error: ea } = await supabase.from('administradores').insert([{ email, rol: 'admin', empresa_id: nueva.id }]);
       if (ea && ea.code !== '23505') throw ea;
-      await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/?tienda=${nueva.id}` } });
+      // Crear cuenta de acceso con la licencia como contraseña inicial
+      await supabase.auth.signUp({ email, password: licencia });
       const url = `${window.location.origin}/?tienda=${nueva.id}`;
       Swal.fire({ title: '¡Empresa creada!', width: 560, icon: 'success', confirmButtonColor: '#7c3aed', confirmButtonText: 'Perfecto',
         html: `<div style="text-align:left;font-size:12px;display:flex;flex-direction:column;gap:8px;">
