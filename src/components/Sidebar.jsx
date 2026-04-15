@@ -2,19 +2,21 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Calendar, Package, Users, ShoppingBag, DollarSign, Shield,
   Settings, Briefcase, Store, BarChart2, Truck, Tag, Monitor,
-  UserCheck, Gift, FileText, LogOut, ChevronRight
+  UserCheck, Gift, FileText, LogOut, ChevronRight, LayoutDashboard
 } from 'lucide-react';
 import { moduloHabilitado } from '../config/modulos';
 
 const ICONOS = {
   Calendar, Package, Users, ShoppingBag, DollarSign, Shield,
   Settings, Briefcase, Store, BarChart2, Truck, Tag, Monitor,
-  UserCheck, Gift, FileText,
+  UserCheck, Gift, FileText, LayoutDashboard,
 };
 
 const MENU_ITEMS = [
+  // Principal
+  { nombre: 'Dashboard',    ruta: '/',             icono: 'LayoutDashboard', moduloId: null,                               grupo: 'Principal' },
   // Servicios
-  { nombre: 'Agenda',       ruta: '/',             icono: 'Calendar',    moduloId: 'agenda',     notifKey: 'citas',    grupo: 'Servicios' },
+  { nombre: 'Agenda',       ruta: '/agenda',       icono: 'Calendar',    moduloId: 'agenda',     notifKey: 'citas',    grupo: 'Servicios' },
   { nombre: 'Servicios',    ruta: '/servicios',    icono: 'Briefcase',   moduloId: 'servicios',                        grupo: 'Servicios' },
   // Ventas
   { nombre: 'Tienda',       ruta: '/tienda-admin', icono: 'Store',       moduloId: 'tienda',                           grupo: 'Ventas' },
@@ -36,6 +38,7 @@ const MENU_ITEMS = [
 ];
 
 const GRUPO_COLORES = {
+  Principal: '#7c3aed',
   Servicios: '#a78bfa',
   Ventas:    '#34d399',
   Gestión:   '#60a5fa',

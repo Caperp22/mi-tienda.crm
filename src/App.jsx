@@ -19,6 +19,7 @@ import GestionEmpresas from './pages/GestionEmpresas';
 import GestionAdminsGlobal from './pages/GestionAdminsGlobal';
 import GestionClientesGlobal from './pages/GestionClientesGlobal';
 import AjustesTienda from './pages/AjustesTienda';
+import DashboardAdmin from './pages/DashboardAdmin';
 
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
@@ -554,16 +555,10 @@ function App() {
               </div>
             ) : (
               <Routes>
-              {/* Ruta raíz: redirige al primer módulo habilitado */}
-              <Route path="/" element={
-                moduloHabilitado(empresaConfig, 'agenda')
-                  ? <Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} />
-                  : moduloHabilitado(empresaConfig, 'pedidos')
-                    ? <Navigate to="/pedidos" />
-                    : moduloHabilitado(empresaConfig, 'inventario')
-                      ? <Navigate to="/inventario" />
-                      : <Navigate to="/clientes" />
-              } />
+              {/* Ruta raíz: ahora es el Centro de Mando */}
+              <Route path="/" element={<DashboardAdmin empresaId={empresaId} />} />
+
+              {moduloHabilitado(empresaConfig, 'agenda')     && <Route path="/agenda"      element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} />} />}
               {moduloHabilitado(empresaConfig, 'servicios')  && <Route path="/servicios"    element={<Servicios empresaId={empresaId} />} />}
               {moduloHabilitado(empresaConfig, 'pedidos')    && <Route path="/pedidos"      element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />}
               {moduloHabilitado(empresaConfig, 'inventario') && <Route path="/inventario"   element={<Inventario empresaId={empresaId} />} />}
