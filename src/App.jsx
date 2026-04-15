@@ -16,6 +16,7 @@ import Pedidos from './pages/Pedidos';
 import GestionAdmins from './pages/GestionAdmins'; 
 import GestionEmpresas from './pages/GestionEmpresas';
 import GestionAdminsGlobal from './pages/GestionAdminsGlobal';
+import GestionClientesGlobal from './pages/GestionClientesGlobal';
 import AjustesTienda from './pages/AjustesTienda';
 
 import Tienda from './pages/Tienda';
@@ -122,6 +123,8 @@ function App() {
   // --- NUEVO ESTADO PARA GRÁFICA GLOBAL (SUPERADMIN) ---
   const [datosGlobales, setDatosGlobales] = useState([]);
   const [ingresosGlobales, setIngresosGlobales] = useState(0);
+  const [totalEmpresas, setTotalEmpresas] = useState(0);
+  const [totalAdmins, setTotalAdmins] = useState(0);
 
   const manejarClickPedidos = () => { setNotificacionesAdmin(0); setRefreshPedidos(prev => prev + 1); };
   const manejarClickCitas = () => { setNotifCitasAdmin(0); setRefreshCitas(prev => prev + 1); };
@@ -202,6 +205,12 @@ function App() {
           setDatosGlobales(grafica);
           setIngresosGlobales(sumaTotal);
         }
+
+        const { count: countEmp } = await supabase.from('empresas').select('*', { count: 'exact', head: true });
+        setTotalEmpresas(countEmp || 0);
+
+        const { count: countAdm } = await supabase.from('administradores').select('*', { count: 'exact', head: true }).eq('rol', 'admin');
+        setTotalAdmins(countAdm || 0);
       }
       obtenerEstadisticasGlobales();
     }
@@ -232,6 +241,9 @@ function App() {
             </div>
             <div onClick={() => setVistaSuperAdmin('admins')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'admins' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'admins' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'admins' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
               <Users size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'admins' ? 'bold' : 'normal' }}>Cuentas de Admins</span>
+            </div>
+            <div onClick={() => setVistaSuperAdmin('clientes')} style={{ padding: '15px 25px', display: 'flex', alignItems: 'center', gap: '15px', cursor: 'pointer', color: vistaSuperAdmin === 'clientes' ? 'white' : '#94a3b8', background: vistaSuperAdmin === 'clientes' ? '#1e293b' : 'transparent', borderLeft: vistaSuperAdmin === 'clientes' ? '4px solid #38bdf8' : '4px solid transparent', transition: 'all 0.2s' }}>
+              <Users size={20} /> <span style={{ fontWeight: vistaSuperAdmin === 'clientes' ? 'bold' : 'normal' }}>Clientes Globales</span>
             </div>
           </div>
 
@@ -269,7 +281,8 @@ function App() {
                       <Building2 size={24} />
                     </div>
                     <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Gestión de Empresas</h3>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px', lineHeight: '1.5' }}>Da de alta a nuevos clientes, configura sus módulos (Tienda/Agenda) y personaliza su imagen corporativa.</p>
+                <p style={{ margin: 0, color: '#3b82f6', fontSize: '24px', fontWeight: '900' }}>{totalEmpresas} Inquilinos</p>
+                <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Empresas activas en la plataforma.</p>
                   </div>
                   
                   <div style={{ background: 'white', padding: '30px', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
@@ -277,7 +290,8 @@ function App() {
                       <Users size={24} />
                     </div>
                     <h3 style={{ margin: '0 0 5px 0', fontSize: '18px', color: '#1e293b' }}>Cuentas de Acceso</h3>
-                    <p style={{ margin: 0, color: '#64748b', fontSize: '14px', lineHeight: '1.5' }}>Enlaza los correos electrónicos de los dueños de negocios a sus respectivas empresas para que puedan operar de forma aislada.</p>
+                <p style={{ margin: 0, color: '#d97706', fontSize: '24px', fontWeight: '900' }}>{totalAdmins} Administradores</p>
+                <p style={{ margin: '5px 0 0 0', color: '#64748b', fontSize: '13px' }}>Usuarios gestionando sus tiendas.</p>
                   </div>
                 </div>
 
@@ -309,6 +323,7 @@ function App() {
             )}
             {vistaSuperAdmin === 'empresas' && <GestionEmpresas />}
             {vistaSuperAdmin === 'admins' && <GestionAdminsGlobal />}
+            {vistaSuperAdmin === 'clientes' && <GestionClientesGlobal />}
           </div>
         </div>
       </div>

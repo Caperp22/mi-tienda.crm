@@ -7,6 +7,7 @@ function GestionEmpresas() {
   const [empresas, setEmpresas] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [nombre, setNombre] = useState('');
+  const [rut, setRut] = useState('');
   const [usaInventario, setUsaInventario] = useState(true);
   const [usaCitas, setUsaCitas] = useState(true);
   const [colorPrincipal, setColorPrincipal] = useState('#3b82f6');
@@ -65,6 +66,7 @@ function GestionEmpresas() {
         .from('empresas')
         .insert([{ 
           nombre, 
+          rut,
           usa_inventario: usaInventario, 
           usa_citas: usaCitas, 
           color_principal: colorPrincipal,
@@ -78,6 +80,7 @@ function GestionEmpresas() {
       
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Empresa registrada', showConfirmButton: false, timer: 3000 });
       setNombre('');
+      setRut('');
       setUsaInventario(true);
       setUsaCitas(true);
       setColorPrincipal('#3b82f6');
@@ -134,6 +137,10 @@ function GestionEmpresas() {
               <div style={{ marginBottom: '15px' }}>
                 <label style={estilos.label}>Nombre Comercial del Negocio</label>
                 <input type="text" placeholder="Ej. Pizzería Don Lucio" value={nombre} onChange={(e) => setNombre(e.target.value)} style={{...estilos.input, background: 'white'}} required />
+              </div>
+              <div style={{ marginTop: '15px' }}>
+                <label style={estilos.label}>RUT / Documento de la Empresa</label>
+                <input type="text" placeholder="Ej. 900.123.456-7" value={rut} onChange={(e) => setRut(e.target.value)} style={{...estilos.input, background: 'white'}} required />
               </div>
               
               <div style={estilos.formGrid}>
@@ -225,7 +232,10 @@ function GestionEmpresas() {
                             {emp.nombre.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px' }}>{emp.nombre}</span>
+                    <div>
+                      <span style={{ fontWeight: 'bold', color: '#334155', fontSize: '13px', display: 'block' }}>{emp.nombre}</span>
+                      {emp.rut && <span style={{ fontSize: '11px', color: '#94a3b8' }}>RUT: {emp.rut}</span>}
+                    </div>
                       </div>
                     </td>
                     <td style={{ padding: '12px 15px' }}>
