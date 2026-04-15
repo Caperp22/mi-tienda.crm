@@ -206,15 +206,15 @@ function GestionEmpresas() {
   const [editPlan, setEditPlan] = useState('pro');
   const [guardando, setGuardando] = useState(false);
 
-  useEffect(() => { localStorage.setItem('ge_dark', dark); }, [dark]);
-  useEffect(() => { cargar(); }, [cargar]);
-
   const cargar = useCallback(async () => {
     setCargando(true);
     const { data } = await supabase.from('empresas').select('*').order('created_at', { ascending: false });
     setEmpresas(data || []);
     setCargando(false);
   }, []);
+
+  useEffect(() => { localStorage.setItem('ge_dark', dark); }, [dark]);
+  useEffect(() => { cargar(); }, [cargar]);
 
   function cambiarPlan(p) { setPlan(p); setModulos(getModulosPorDefecto(p)); }
   function toggleMod(id) { if (!MODULOS_POR_PLAN[plan]?.includes(id)) return; setModulos(prev => ({ ...prev, [id]: !prev[id] })); }
