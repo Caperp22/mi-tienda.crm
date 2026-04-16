@@ -10,6 +10,7 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
   const [mesActual,        setMesActual]        = useState(new Date());
   const [fechaSel,         setFechaSel]         = useState(null);
   const [nuevoBloqueo,     setNuevoBloqueo]     = useState({ fecha: '', motivo: '' });
+  const [bloqueando,       setBloqueando]       = useState(false);
 
   /* ─── Tema ──────────────────────────────────────────────── */
   const t = {
@@ -54,9 +55,16 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
 
   async function bloquearFecha(e) {
     e.preventDefault();
-    const { data, error } = await supabase.from('fechas_bloqueadas').insert([{ ...nuevoBloqueo, empresa_id: empresaId }]).select();
-    if (!error && data) {
-      setFechasBloqueadas([...fechasBloqueadas, data[0]]);
+    if (!nuevoBloqueo.fecha) return;
+    setBloqueando(true);
+    const { data, error } = await supabase
+      .from('fechas_bloqueadas')
+      .insert([{ fecha: nuevoBloqueo.fecha, motivo: nuevoBloqueo.motivo || '', empresa_id: empresaId }])
+      .select();
+    setBloqueando(false);
+    if (error) return Swal.fire('Error al bloquear', error.message, 'error');
+    if (data?.[0]) {
+      setFechasBloqueadas(prev => [...prev, data[0]]);
       setNuevoBloqueo({ fecha: '', motivo: '' });
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Fecha bloqueada', showConfirmButton: false, timer: 1800 });
     }
@@ -155,8 +163,8 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
             <form onSubmit={bloquearFecha} style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
               <input type="date" style={{ ...inp, flex: 1, minWidth: '120px' }} value={nuevoBloqueo.fecha} onChange={e => setNuevoBloqueo({ ...nuevoBloqueo, fecha: e.target.value })} required />
               <input type="text" placeholder="Motivo (opcional)" style={{ ...inp, flex: 2, minWidth: '130px' }} value={nuevoBloqueo.motivo} onChange={e => setNuevoBloqueo({ ...nuevoBloqueo, motivo: e.target.value })} />
-              <button type="submit" style={{ padding: '9px 16px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px', flexShrink: 0 }}>
-                Bloquear
+              <button type="submit" disabled={bloqueando} style={{ padding: '9px 16px', background: bloqueando ? '#fca5a5' : '#ef4444', color: 'white', border: 'none', borderRadius: '8px', cursor: bloqueando ? 'not-allowed' : 'pointer', fontWeight: '700', fontSize: '12px', flexShrink: 0 }}>
+                {bloqueando ? 'Guardando...' : 'Bloquear'}
               </button>
             </form>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
