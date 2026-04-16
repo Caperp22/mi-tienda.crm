@@ -52,7 +52,7 @@ const PLAN_CONFIG = {
   básico:  { label: 'Básico',  color: '#94a3b8', bg: 'rgba(148,163,184,0.1)', border: 'rgba(148,163,184,0.25)' },
 };
 
-function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, manejarClickCitas, empresaConfig, cerrarSesion }) {
+function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, manejarClickCitas, empresaConfig, cerrarSesion, dark = false, color }) {
   const ubicacion = useLocation();
 
   const menuFiltrado = MENU_ITEMS
@@ -66,20 +66,25 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
   const grupos = [...new Set(menuFiltrado.map(i => i.grupo))];
   const plan = empresaConfig?.plan || 'básico';
   const planCfg = PLAN_CONFIG[plan] || PLAN_CONFIG['básico'];
-  const colorActivo = empresaConfig?.color_principal || '#38bdf8';
+  const colorActivo = color || empresaConfig?.color_principal || '#38bdf8';
+
+  const sideBg = dark
+    ? 'linear-gradient(180deg, #04080f 0%, #080e1a 100%)'
+    : 'linear-gradient(180deg, #0a0f1e 0%, #0f172a 100%)';
 
   return (
     <div
       className="admin-sidebar"
       style={{
-        width: '260px',
-        background: 'linear-gradient(180deg, #0a0f1e 0%, #0f172a 100%)',
-        minHeight: '100vh',
+        width: '250px',
+        background: sideBg,
+        height: '100vh',
         color: 'white',
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        borderRight: '1px solid rgba(255,255,255,0.05)',
+        borderRight: dark ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.07)',
+        overflow: 'hidden',
       }}
     >
       {/* ── Header: Logo + Empresa ─────────────────── */}

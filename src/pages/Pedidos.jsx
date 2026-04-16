@@ -1,198 +1,184 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Clock, Truck, CheckCircle, Eye, X } from 'lucide-react';
+import { Clock, Truck, CheckCircle2, Eye, X, Package } from 'lucide-react';
 
-function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin }) {
-  const [pedidos, setPedidos] = useState([]);
+const ESTADOS = {
+  Pendiente: { color: '#f59e0b', bg: '#fffbeb', bgDark: 'rgba(245,158,11,0.1)', border: '#fde68a', label: 'Pendiente', icon: Clock },
+  Enviado:   { color: '#3b82f6', bg: '#eff6ff', bgDark: 'rgba(59,130,246,0.1)',  border: '#bfdbfe', label: 'En camino', icon: Truck },
+  Entregado: { color: '#10b981', bg: '#f0fdf4', bgDark: 'rgba(16,185,129,0.1)', border: '#a7f3d0', label: 'Entregado', icon: CheckCircle2 },
+};
+
+function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, empresaId, dark = false, color = '#3b82f6' }) {
+  const [pedidos,           setPedidos]           = useState([]);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
 
-  const imagenesPlaceholder = {
-    'Producto de prueba': 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
-    'Producto 2': 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80'
+  /* ─── Tema ──────────────────────────────────────────────── */
+  const t = {
+    col:    dark ? 'rgba(255,255,255,0.04)' : '#f1f5f9',
+    card:   dark ? 'rgba(255,255,255,0.06)' : 'white',
+    border: dark ? 'rgba(255,255,255,0.08)' : '#e2e8f0',
+    borderL:dark ? 'rgba(255,255,255,0.05)' : '#f1f5f9',
+    text:   dark ? '#f0f4ff'                : '#0f172a',
+    sub:    dark ? '#94a3b8'                : '#64748b',
+    modal:  dark ? '#0d1526'                : 'white',
   };
 
-  const obtenerPedidos = useCallback(async () => {
-    const { data, error } = await supabase.from('pedidos').select('*').order('id', { ascending: false });
-    if (!error) setPedidos(data);
-  }, []);
+  /* ─── Datos ─────────────────────────────────────────────── */
+  const obtener = useCallback(async () => {
+    const query = supabase.from('pedidos').select('*').order('created_at', { ascending: false });
+    if (empresaId) query.eq('empresa_id', empresaId);
+    const { data } = await query;
+    setPedidos(data || []);
+  }, [empresaId]);
 
   useEffect(() => {
-    obtenerPedidos();
-    if (notificacionesAdmin > 0) {
-      setNotificacionesAdmin(0);
-    }
-  }, [refreshPedidos, notificacionesAdmin, obtenerPedidos, setNotificacionesAdmin]);
+    obtener();
+    if (notificacionesAdmin > 0) setNotificacionesAdmin(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshPedidos]);
 
-  // ¡MAGIA DE INVENTARIO!: Actualizamos la función cambiarEstado
+  /* ─── Cambiar estado ────────────────────────────────────── */
   async function cambiarEstado(id, nuevoEstado) {
-    // 1. Cambiamos el estado del pedido en la base de datos
     const { error } = await supabase.from('pedidos').update({ estado: nuevoEstado }).eq('id', id);
-    
-    if (error) {
-      return Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
-    } 
-    
-    // 2. Si el pedido se marca como "Entregado", descontamos el stock
+    if (error) return Swal.fire('Error', 'No se pudo actualizar el estado', 'error');
+
     if (nuevoEstado === 'Entregado') {
-      // Buscamos el pedido exacto en nuestra lista actual para ver qué compró
-      const pedidoAfectado = pedidos.find(p => p.id === id);
-      
-      if (pedidoAfectado) {
-        // Recorremos cada producto que compró el cliente
-        for (const prod of pedidoAfectado.productos) {
-          
-          // A. Consultamos el stock real que hay en la base de datos en este momento
-          const { data: productoBD } = await supabase
-            .from('productos')
-            .select('stock')
-            .eq('id', prod.id)
-            .single();
-
-          if (productoBD) {
-            // B. Calculamos el nuevo stock (Stock actual - Cantidad comprada)
-            // (Usamos Math.max para asegurarnos de que el stock nunca baje de 0 por error)
-            const nuevoStock = Math.max(0, productoBD.stock - prod.cantidad);
-
-            // C. Guardamos el nuevo stock en el Inventario
-            await supabase
-              .from('productos')
-              .update({ stock: nuevoStock })
-              .eq('id', prod.id);
-          }
+      const pedido = pedidos.find(p => p.id === id);
+      if (pedido?.productos) {
+        for (const prod of pedido.productos) {
+          const { data: bd } = await supabase.from('productos').select('stock').eq('id', prod.id).single();
+          if (bd) await supabase.from('productos').update({ stock: Math.max(0, bd.stock - prod.cantidad) }).eq('id', prod.id);
         }
       }
-      
-      Swal.fire({
-        icon: 'success',
-        title: '¡Venta Cerrada!',
-        text: 'El pedido fue entregado y el inventario se ha actualizado automáticamente.',
-        timer: 3000,
-        showConfirmButton: false
-      });
+      Swal.fire({ icon: 'success', title: '¡Venta cerrada!', text: 'Inventario actualizado automáticamente.', timer: 2500, showConfirmButton: false });
     } else {
-      // Mensaje normal si solo lo pasamos a "Enviado"
-      const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
-      Toast.fire({ icon: 'success', title: `Movido a ${nuevoEstado}` });
+      Swal.fire({ toast: true, position: 'top-end', showConfirmButton: false, timer: 1500, icon: 'success', title: `Movido a ${nuevoEstado}` });
     }
-
-    // 3. Recargamos la lista para ver los cambios
-    obtenerPedidos();
+    obtener();
   }
 
-  const pendientes = pedidos.filter(p => p.estado === 'Pendiente');
-  const enviados = pedidos.filter(p => p.estado === 'Enviado');
-  const entregados = pedidos.filter(p => p.estado === 'Entregado');
-
-  const estilos = {
-    grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '20px', height: 'calc(100vh - 180px)', alignItems: 'start' },
-    columna: { background: '#f1f5f9', borderRadius: '12px', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflow: 'hidden' },
-    colHeader: { display: 'flex', alignItems: 'center', gap: '10px', fontSize: '18px', fontWeight: 'bold', padding: '15px', borderBottom: '2px solid #e2e8f0', background: '#f1f5f9', zIndex: 10 },
-    listaTarjetas: { padding: '15px', overflowY: 'auto', flex: 1 },
-    card: { background: 'white', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', marginBottom: '15px', borderLeft: '4px solid #cbd5e1', display: 'flex', flexDirection: 'column' },
-    btn: { width: '100%', padding: '8px', marginTop: '10px', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', color: 'white' },
-    btnSecondary: { width: '100%', padding: '8px', marginTop: '10px', border: '1px solid #cbd5e1', background: 'white', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' },
-    overlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', zIndex: 1000, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '20px' },
-    modalBox: { background: 'white', borderRadius: '16px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', padding: '30px', position: 'relative', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' },
-    productoFila: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 0', borderBottom: '1px solid #e2e8f0' },
-    imgMini: { width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }
-  };
+  const cols = ['Pendiente', 'Enviado', 'Entregado'];
+  const fmt  = n => `$${Number(n).toLocaleString('es-CO')}`;
+  const date = s => new Date(s).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
 
   return (
-    <div style={{ fontFamily: 'sans-serif', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <h1 style={{ fontSize: '28px', color: '#1e293b', marginBottom: '5px' }}>Gestión de Pedidos</h1>
-      <p style={{ color: '#64748b', marginBottom: 0 }}>Administra el flujo de trabajo de las compras de tus clientes.</p>
-
-      <div style={estilos.grid}>
-        {/* PENDIENTES */}
-        <div style={estilos.columna}>
-          <div style={{ ...estilos.colHeader, color: '#d97706', borderColor: '#fcd34d' }}>
-            <Clock /> Pendientes ({pendientes.length})
-          </div>
-          <div style={estilos.listaTarjetas}>
-            {pendientes.map(p => (
-              <div key={p.id} style={{ ...estilos.card, borderLeftColor: '#f59e0b' }}>
-                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#64748b' }}>#{p.id} - {new Date(p.created_at).toLocaleDateString()}</p>
-                <p style={{ fontWeight: 'bold', margin: '0 0 10px 0' }}>{p.cliente_email}</p>
-                <p style={{ fontWeight: 'bold', color: '#10b981', margin: '0 0 10px 0' }}>Total: ${p.total}</p>
-                <button onClick={() => setPedidoSeleccionado(p)} style={estilos.btnSecondary}>
-                  <Eye size={16} /> Ver Detalles
-                </button>
-                <button onClick={() => cambiarEstado(p.id, 'Enviado')} style={{ ...estilos.btn, background: '#3b82f6' }}>Mandar a Envío →</button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ENVIADOS */}
-        <div style={estilos.columna}>
-          <div style={{ ...estilos.colHeader, color: '#2563eb', borderColor: '#bfdbfe' }}>
-            <Truck /> En Camino ({enviados.length})
-          </div>
-          <div style={estilos.listaTarjetas}>
-            {enviados.map(p => (
-              <div key={p.id} style={{ ...estilos.card, borderLeftColor: '#3b82f6' }}>
-                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#64748b' }}>#{p.id}</p>
-                <p style={{ fontWeight: 'bold', margin: '0 0 10px 0' }}>{p.cliente_email}</p>
-                <p style={{ fontWeight: 'bold', color: '#10b981', margin: '0 0 10px 0' }}>Total: ${p.total}</p>
-                <button onClick={() => setPedidoSeleccionado(p)} style={estilos.btnSecondary}>
-                  <Eye size={16} /> Ver Detalles
-                </button>
-                <button onClick={() => cambiarEstado(p.id, 'Entregado')} style={{ ...estilos.btn, background: '#10b981' }}>Marcar Entregado ✓</button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ENTREGADOS */}
-        <div style={estilos.columna}>
-          <div style={{ ...estilos.colHeader, color: '#059669', borderColor: '#a7f3d0' }}>
-            <CheckCircle /> Entregados ({entregados.length})
-          </div>
-          <div style={estilos.listaTarjetas}>
-            {entregados.map(p => (
-              <div key={p.id} style={{ ...estilos.card, borderLeftColor: '#10b981', opacity: 0.8 }}>
-                <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#64748b' }}>#{p.id}</p>
-                <p style={{ fontWeight: 'bold', margin: '0 0 5px 0' }}>{p.cliente_email}</p>
-                <p style={{ fontWeight: 'bold', color: '#10b981', margin: '0 0 10px 0' }}>Cobrado: ${p.total}</p>
-                <button onClick={() => setPedidoSeleccionado(p)} style={estilos.btnSecondary}>
-                  <Eye size={16} /> Ver Detalles
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Encabezado */}
+      <div style={{ marginBottom: '20px' }}>
+        <h1 style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: '800', color: t.text }}>Pedidos</h1>
+        <p style={{ margin: 0, fontSize: '13px', color: t.sub }}>Flujo de trabajo de las compras de tus clientes.</p>
       </div>
 
-      {/* MODAL EMERGENTE */}
-      {pedidoSeleccionado && (
-        <div style={estilos.overlay} onClick={() => setPedidoSeleccionado(null)}>
-          <div style={estilos.modalBox} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #f1f5f9', paddingBottom: '15px' }}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '24px', color: '#1e293b' }}>Pedido #{pedidoSeleccionado.id}</h2>
-                <p style={{ margin: '5px 0 0 0', color: '#64748b' }}>{pedidoSeleccionado.cliente_email}</p>
+      {/* Kanban */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', flex: 1, minHeight: 0 }}>
+        {cols.map(estado => {
+          const cfg   = ESTADOS[estado];
+          const lista = pedidos.filter(p => p.estado === estado);
+          const Icon  = cfg.icon;
+          return (
+            <div key={estado} style={{ background: dark ? cfg.bgDark : cfg.bg, borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.07)' : cfg.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {/* Cabecera columna */}
+              <div style={{ padding: '13px 16px', borderBottom: `1px solid ${dark ? 'rgba(255,255,255,0.07)' : cfg.border}`, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon size={16} color={cfg.color} />
+                <span style={{ fontWeight: '700', fontSize: '14px', color: cfg.color }}>{cfg.label}</span>
+                <span style={{ marginLeft: 'auto', background: dark ? 'rgba(255,255,255,0.08)' : 'white', color: cfg.color, borderRadius: '10px', padding: '1px 8px', fontSize: '11px', fontWeight: '700', border: `1px solid ${dark ? 'rgba(255,255,255,0.1)' : cfg.border}` }}>
+                  {lista.length}
+                </span>
               </div>
-              <button onClick={() => setPedidoSeleccionado(null)} style={{ background: '#f1f5f9', border: 'none', padding: '8px', borderRadius: '50%', cursor: 'pointer', color: '#64748b' }}>
-                <X size={20} />
+
+              {/* Tarjetas */}
+              <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>
+                {lista.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '30px 10px', color: t.sub, fontSize: '13px' }}>Sin pedidos</div>
+                )}
+                {lista.map(p => (
+                  <div key={p.id} style={{
+                    background: t.card, borderRadius: '10px', padding: '13px',
+                    marginBottom: '10px', border: `1px solid ${t.border}`,
+                    borderLeft: `3px solid ${cfg.color}`,
+                    boxShadow: dark ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', color: t.sub }}>#{String(p.id).slice(0, 8)}</span>
+                      <span style={{ fontSize: '11px', color: t.sub }}>{date(p.created_at)}</span>
+                    </div>
+                    <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: '600', color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {p.cliente_email}
+                    </p>
+                    <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: '800', color: cfg.color }}>
+                      {fmt(p.total)}
+                    </p>
+                    <button onClick={() => setPedidoSeleccionado(p)} style={{
+                      width: '100%', padding: '7px', border: `1px solid ${t.border}`,
+                      background: dark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
+                      borderRadius: '7px', cursor: 'pointer', fontSize: '12px', fontWeight: '600',
+                      color: t.sub, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                      marginBottom: '6px',
+                    }}>
+                      <Eye size={13} /> Ver detalles
+                    </button>
+                    {estado === 'Pendiente' && (
+                      <button onClick={() => cambiarEstado(p.id, 'Enviado')} style={{ width: '100%', padding: '8px', border: 'none', borderRadius: '7px', background: color, color: 'white', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}>
+                        Enviar →
+                      </button>
+                    )}
+                    {estado === 'Enviado' && (
+                      <button onClick={() => cambiarEstado(p.id, 'Entregado')} style={{ width: '100%', padding: '8px', border: 'none', borderRadius: '7px', background: '#10b981', color: 'white', fontWeight: '700', cursor: 'pointer', fontSize: '12px' }}>
+                        ✓ Entregado
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Modal detalle ─────────────────────────────── */}
+      {pedidoSeleccionado && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,13,26,0.75)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+          onClick={() => setPedidoSeleccionado(null)}>
+          <div style={{ background: t.modal, border: `1px solid ${t.border}`, borderRadius: '16px', width: '100%', maxWidth: '560px', maxHeight: '90vh', overflowY: 'auto', padding: '28px', position: 'relative' }}
+            onClick={e => e.stopPropagation()}>
+            {/* Header modal */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', paddingBottom: '16px', borderBottom: `1px solid ${t.border}` }}>
+              <div>
+                <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: '800', color: t.text }}>
+                  Pedido #{String(pedidoSeleccionado.id).slice(0, 8)}
+                </h2>
+                <p style={{ margin: 0, fontSize: '13px', color: t.sub }}>{pedidoSeleccionado.cliente_email}</p>
+              </div>
+              <button onClick={() => setPedidoSeleccionado(null)} style={{ background: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', border: 'none', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.sub }}>
+                <X size={15} />
               </button>
             </div>
-            <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '16px', color: '#475569', marginBottom: '10px' }}>Artículos Comprados:</h3>
-              {pedidoSeleccionado.productos.map((prod, i) => (
-                <div key={i} style={estilos.productoFila}>
-                  <img src={imagenesPlaceholder[prod.nombre] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80'} alt={prod.nombre} style={estilos.imgMini} />
-                  <div style={{ flex: 1 }}>
-                    <p style={{ margin: '0 0 5px 0', fontWeight: 'bold', fontSize: '16px', color: '#1e293b' }}>{prod.nombre}</p>
-                    <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>{prod.cantidad} x ${prod.precio}</p>
+
+            {/* Productos */}
+            <div style={{ marginBottom: '16px' }}>
+              <p style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: '700', color: t.sub, textTransform: 'uppercase', letterSpacing: '0.8px' }}>Artículos</p>
+              {(pedidoSeleccionado.productos || []).map((prod, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: `1px solid ${t.border}` }}>
+                  <div style={{ width: '42px', height: '42px', borderRadius: '8px', background: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {prod.imagen
+                      ? <img src={prod.imagen} alt={prod.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      : <Package size={18} color={t.sub} />
+                    }
                   </div>
-                  <div style={{ fontWeight: 'bold', color: '#10b981', fontSize: '16px' }}>${prod.cantidad * prod.precio}</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ margin: '0 0 2px', fontWeight: '600', fontSize: '14px', color: t.text }}>{prod.nombre}</p>
+                    <p style={{ margin: 0, fontSize: '12px', color: t.sub }}>{prod.cantidad} × {fmt(prod.precio)}</p>
+                  </div>
+                  <span style={{ fontWeight: '700', color: color }}>{fmt(prod.cantidad * prod.precio)}</span>
                 </div>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '20px', borderRadius: '12px' }}>
-              <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#475569' }}>TOTAL A COBRAR</span>
-              <span style={{ fontSize: '24px', fontWeight: '900', color: '#10b981' }}>${pedidoSeleccionado.total}</span>
+
+            {/* Total */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: dark ? 'rgba(255,255,255,0.04)' : '#f8fafc', padding: '16px 18px', borderRadius: '10px', border: `1px solid ${t.border}` }}>
+              <span style={{ fontWeight: '700', color: t.sub }}>TOTAL</span>
+              <span style={{ fontSize: '22px', fontWeight: '900', color: color }}>{fmt(pedidoSeleccionado.total)}</span>
             </div>
           </div>
         </div>

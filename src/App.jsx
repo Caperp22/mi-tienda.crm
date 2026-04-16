@@ -20,6 +20,13 @@ import GestionAdminsGlobal from './pages/GestionAdminsGlobal';
 import GestionClientesGlobal from './pages/GestionClientesGlobal';
 import AjustesTienda from './pages/AjustesTienda';
 import DashboardAdmin from './pages/DashboardAdmin';
+import Domicilios from './pages/Domicilios';
+import Cupones from './pages/Cupones';
+import Estadisticas from './pages/Estadisticas';
+import POS from './pages/POS';
+import Empleados from './pages/Empleados';
+import Fidelizacion from './pages/Fidelizacion';
+import Reportes from './pages/Reportes';
 
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
@@ -536,38 +543,88 @@ function App() {
     );
   }
 
-  // --- MUNDO ADMINISTRADOR DE EMPRESA (Tus Clientes que compraron el CRM) ---
+  // --- MUNDO ADMINISTRADOR DE EMPRESA ---
   if (rol === 'admin') {
+    const d = esTemaOscuro;
+    const color = empresaConfig?.color_principal || '#3b82f6';
+    const adm = {
+      page:    d ? '#0a0f1a' : '#f1f5f9',
+      topbar:  d ? '#0d1424' : 'white',
+      border:  d ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
+      text:    d ? '#f0f4ff' : '#0f172a',
+      sub:     d ? '#94a3b8' : '#64748b',
+      content: d ? '#0a0f1a' : '#f1f5f9',
+    };
     return (
-      <div className="admin-container" style={{ display: 'flex', fontFamily: 'sans-serif', margin: 0, padding: 0 }}>
-        <Sidebar notificacionesAdmin={notificacionesAdmin} manejarClickPedidos={manejarClickPedidos} notifCitasAdmin={notifCitasAdmin} manejarClickCitas={manejarClickCitas} empresaConfig={empresaConfig} />
-        <div className="admin-main" style={{ width: '100%', background: '#f8fafc', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          <div className="admin-header" style={{ background: 'white', padding: '15px 30px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
-             <span style={{ fontWeight: 'bold', color: '#64748b', marginRight: '20px' }}>Hola, Jefe ({usuario.email})</span>
-             <button onClick={cerrarSesion} style={{ padding: '8px 15px', background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cerrar Sesión</button>
+      <div className="admin-container" style={{ display: 'flex', fontFamily: 'system-ui,sans-serif', margin: 0, padding: 0, height: '100vh', overflow: 'hidden', background: adm.page }}>
+        <Sidebar
+          dark={d}
+          color={color}
+          notificacionesAdmin={notificacionesAdmin}
+          manejarClickPedidos={manejarClickPedidos}
+          notifCitasAdmin={notifCitasAdmin}
+          manejarClickCitas={manejarClickCitas}
+          empresaConfig={empresaConfig}
+          cerrarSesion={cerrarSesion}
+        />
+        <div className="admin-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+          {/* ── Topbar ── */}
+          <div className="admin-header" style={{
+            background: adm.topbar, borderBottom: `1px solid ${adm.border}`,
+            padding: '0 28px', height: '58px', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            boxShadow: d ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, boxShadow: `0 0 6px ${color}` }} />
+              <span style={{ fontSize: '13px', fontWeight: '600', color: adm.text }}>
+                {empresaNombre}
+              </span>
+              <span style={{ fontSize: '12px', color: adm.sub, background: d ? 'rgba(255,255,255,0.06)' : '#f1f5f9', padding: '2px 8px', borderRadius: '4px' }}>
+                {new Date().toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '12px', color: adm.sub }}>{usuario.email}</span>
+              <button onClick={() => setEsTemaOscuro(v => !v)} style={{
+                background: d ? 'rgba(255,255,255,0.07)' : '#f1f5f9',
+                border: `1px solid ${adm.border}`, borderRadius: '8px',
+                width: '34px', height: '34px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: adm.sub,
+              }}>
+                {d ? <Sun size={15} /> : <Moon size={15} />}
+              </button>
+            </div>
           </div>
-          <div className="admin-content" style={{ padding: '40px' }}>
+
+          {/* ── Contenido ── */}
+          <div className="admin-content" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '28px 32px' }}>
             {empresaConfig?.estado === 'inactiva' ? (
-              <div style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+              <div style={{ textAlign: 'center', padding: '60px 20px', background: adm.topbar, borderRadius: '14px', border: `1px solid ${adm.border}` }}>
                 <Power size={48} color="#ef4444" style={{ marginBottom: '15px' }} />
-                <h2 style={{ margin: '0 0 10px', color: '#1e293b' }}>Cuenta Suspendida</h2>
-                <p style={{ color: '#64748b' }}>El portal de tu negocio ha sido pausado. Por favor, contacta al administrador del sistema.</p>
+                <h2 style={{ margin: '0 0 10px', color: adm.text }}>Cuenta Suspendida</h2>
+                <p style={{ color: adm.sub }}>El portal de tu negocio ha sido pausado. Contacta al administrador.</p>
               </div>
             ) : (
               <Routes>
-              {/* Ruta raíz: ahora es el Centro de Mando */}
-              <Route path="/" element={<DashboardAdmin empresaId={empresaId} />} />
-
-              {moduloHabilitado(empresaConfig, 'agenda')     && <Route path="/agenda"      element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} />} />}
-              {moduloHabilitado(empresaConfig, 'servicios')  && <Route path="/servicios"    element={<Servicios empresaId={empresaId} />} />}
-              {moduloHabilitado(empresaConfig, 'pedidos')    && <Route path="/pedidos"      element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} />} />}
-              {moduloHabilitado(empresaConfig, 'inventario') && <Route path="/inventario"   element={<Inventario empresaId={empresaId} />} />}
-              {moduloHabilitado(empresaConfig, 'ventas')     && <Route path="/ventas"       element={<Ventas />} />}
-              {moduloHabilitado(empresaConfig, 'admins')     && <Route path="/admins"       element={<GestionAdmins />} />}
-              <Route path="/clientes" element={<Clientes />} />
-              <Route path="/ajustes"  element={<AjustesTienda empresaId={empresaId} />} />
-              <Route path="*"         element={<Navigate to="/" />} />
-            </Routes>
+                <Route path="/"            element={<DashboardAdmin dark={d} color={color} empresaId={empresaId} />} />
+                {moduloHabilitado(empresaConfig, 'agenda')     && <Route path="/agenda"      element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'servicios')  && <Route path="/servicios"    element={<Servicios empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'pedidos')    && <Route path="/pedidos"      element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'inventario') && <Route path="/inventario"   element={<Inventario empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'ventas')     && <Route path="/ventas"       element={<Ventas empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'admins')     && <Route path="/admins"       element={<GestionAdmins empresaId={empresaId} dark={d} color={color} />} />}
+                <Route path="/clientes"    element={<Clientes empresaId={empresaId} dark={d} color={color} />} />
+                <Route path="/ajustes"     element={<AjustesTienda empresaId={empresaId} dark={d} color={color} />} />
+                {moduloHabilitado(empresaConfig, 'domicilios')   && <Route path="/domicilios"   element={<Domicilios empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'cupones')      && <Route path="/cupones"      element={<Cupones empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'estadisticas') && <Route path="/estadisticas" element={<Estadisticas empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'pos')          && <Route path="/pos"          element={<POS empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'empleados')    && <Route path="/empleados"    element={<Empleados empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'fidelizacion') && <Route path="/fidelizacion" element={<Fidelizacion empresaId={empresaId} dark={d} color={color} />} />}
+                {moduloHabilitado(empresaConfig, 'reportes')     && <Route path="/reportes"     element={<Reportes empresaId={empresaId} dark={d} color={color} />} />}
+                <Route path="*"            element={<Navigate to="/" />} />
+              </Routes>
             )}
           </div>
         </div>
