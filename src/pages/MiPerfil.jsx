@@ -35,15 +35,30 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
     }
   }
 
+  const d = esTemaOscuro;
+  const cPrin = empresaConfig?.color_principal || '#3b82f6';
+  const cSec  = empresaConfig?.color_secundario || '#0f172a';
+  const cTer  = empresaConfig?.color_terciario || '#f59e0b';
+
+  const sys = {
+    bg:      d ? `color-mix(in srgb, ${cSec} 15%, black)` : `color-mix(in srgb, ${cSec} 3%, white)`,
+    navBg:   d ? `color-mix(in srgb, ${cSec} 25%, black)` : 'white',
+    cardBg:  d ? `color-mix(in srgb, ${cSec} 25%, black)` : 'white',
+    border:  d ? `color-mix(in srgb, ${cSec} 40%, black)` : `color-mix(in srgb, ${cSec} 15%, white)`,
+    text:    d ? '#f0f4ff' : '#0f172a',
+    sub:     d ? '#94a3b8' : '#475569',
+    hover:   d ? `color-mix(in srgb, ${cSec} 35%, black)` : `color-mix(in srgb, ${cSec} 8%, white)`,
+  };
+
   const estilos = {
-    container: { minHeight: '100vh', color: esTemaOscuro ? '#f8fafc' : '#0f172a', transition: 'color 0.3s', overflowX: 'hidden' },
-    navbar: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, position: 'sticky', top: 0, zIndex: 100 },
-    navLinks: { color: esTemaOscuro ? '#e2e8f0' : '#4b5563', textDecoration: 'none', fontWeight: '500', transition: 'color 0.2s' },
-    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: empresaConfig?.color_principal || '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
-    formCard: { background: esTemaOscuro ? '#1e293b' : 'white', maxWidth: '500px', margin: '60px auto', padding: '40px', borderRadius: '16px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, boxShadow: esTemaOscuro ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)' },
-    label: { display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: esTemaOscuro ? '#cbd5e1' : '#475569' },
-    input: { width: '100%', padding: '14px', borderRadius: '8px', border: `1px solid ${esTemaOscuro ? '#475569' : '#cbd5e1'}`, background: esTemaOscuro ? '#0f172a' : '#f8fafc', color: esTemaOscuro ? 'white' : 'black', fontSize: '15px', marginBottom: '20px', boxSizing: 'border-box', outline: 'none' },
-    btnPrimary: { width: '100%', padding: '16px', background: empresaConfig?.color_principal || '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }
+    container: { minHeight: '100vh', color: sys.text, transition: 'color 0.3s', overflowX: 'hidden' },
+    navbar: { background: sys.navBg, padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sys.border}`, position: 'sticky', top: 0, zIndex: 100 },
+    navLinks: { color: sys.text, textDecoration: 'none', fontWeight: '600', transition: 'color 0.2s' },
+    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: cTer, color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
+    formCard: { background: sys.cardBg, maxWidth: '500px', margin: '60px auto', padding: '40px', borderRadius: '16px', border: `1px solid ${sys.border}`, boxShadow: d ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)' },
+    label: { display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px', color: sys.text },
+    input: { width: '100%', padding: '14px', borderRadius: '8px', border: `1px solid ${sys.border}`, background: sys.bg, color: sys.text, fontSize: '15px', marginBottom: '20px', boxSizing: 'border-box', outline: 'none' },
+    btnPrimary: { width: '100%', padding: '16px', background: cPrin, color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '16px', marginTop: '10px' }
   };
 
   return (
@@ -69,7 +84,7 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
               <Link to="/mis-citas" style={estilos.navLinks}>Mis Citas</Link>
             </>
           )}
-          <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
+          <div style={{ borderLeft: `1px solid ${sys.border}`, height: '24px', margin: '0 5px' }}></div>
           <button onClick={() => setEsTemaOscuro(!esTemaOscuro)} style={{ background: 'none', border: 'none', color: estilos.navLinks.color, cursor: 'pointer', padding: 0 }}><Sun size={22} /></button>
           
           <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -82,18 +97,20 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
             {mostrarNotif && (
               <>
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 998 }} onClick={() => setMostrarNotif(false)}></div>
-                <div style={{ position: 'absolute', top: '35px', right: '-10px', width: '320px', background: esTemaOscuro ? '#1e293b' : 'white', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, zIndex: 999, overflow: 'hidden' }}>
-                  <div style={{ padding: '15px', fontWeight: 'bold', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#f1f5f9'}`, color: esTemaOscuro ? '#f8fafc' : '#0f172a' }}>
+                <div style={{ position: 'absolute', top: '35px', right: '-10px', width: '320px', background: sys.navBg, borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', border: `1px solid ${sys.border}`, zIndex: 999, overflow: 'hidden' }}>
+                  <div style={{ padding: '15px', fontWeight: 'bold', borderBottom: `1px solid ${sys.border}`, color: sys.text }}>
                     Notificaciones ({Array.isArray(notificaciones) ? notificaciones.length : 0})
                   </div>
                   {!Array.isArray(notificaciones) || notificaciones.length === 0 ? (
-                    <div style={{ padding: '30px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>No hay nada nuevo por aquí.</div>
+                    <div style={{ padding: '30px 20px', textAlign: 'center', color: sys.sub, fontSize: '14px' }}>No hay nada nuevo por aquí.</div>
                   ) : (
                     <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                       {notificaciones.map(n => (
-                        <div key={n.id} onClick={() => { navigate(n.ruta); setNotificaciones(notificaciones.filter(x => x.id !== n.id)); setMostrarNotif(false); }} style={{ padding: '15px', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#f1f5f9'}`, cursor: 'pointer', fontSize: '13px', color: esTemaOscuro ? '#cbd5e1' : '#475569', transition: 'background 0.2s' }}>
-                            <div style={{ fontWeight: 'bold', color: n.ruta === '/mis-citas' ? '#4f46e5' : '#10b981', marginBottom: '4px' }}>{n.ruta === '/mis-citas' ? '📅 Actualización de Cita' : '🛍️ Actualización de Pedido'}</div>
-                            <div>{n.texto}</div>
+                        <div key={n.id} onClick={() => { navigate(n.ruta); setNotificaciones(notificaciones.filter(x => x.id !== n.id)); setMostrarNotif(false); }} style={{ padding: '15px', borderBottom: `1px solid ${sys.border}`, cursor: 'pointer', fontSize: '13px', color: sys.text, transition: 'background 0.2s' }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = sys.hover}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                            <div style={{ fontWeight: 'bold', color: n.ruta === '/mis-citas' ? cPrin : cTer, marginBottom: '4px' }}>{n.ruta === '/mis-citas' ? '📅 Actualización de Cita' : '🛍️ Actualización de Pedido'}</div>
+                            <div style={{ color: sys.sub }}>{n.texto}</div>
                         </div>
                       ))}
                     </div>
@@ -103,21 +120,21 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
             )}
           </div>
 
-          <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
+          <div style={{ borderLeft: `1px solid ${sys.border}`, height: '24px', margin: '0 5px' }}></div>
           
-          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: empresaConfig?.color_principal || '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
+          <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: cPrin, fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
             <User size={18} /><span>{usuario?.user_metadata?.nombre || 'Mi Perfil'}</span>
           </Link>
           
-          <button onClick={cerrarSesion} style={{ padding: '8px 16px', background: esTemaOscuro ? '#334155' : '#f3f4f6', color: estilos.navLinks.color, border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', marginLeft: '5px' }}>Salir</button>
+          <button onClick={cerrarSesion} style={{ padding: '8px 16px', background: sys.hover, color: sys.text, border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', marginLeft: '5px' }}>Salir</button>
         </div>
       </nav>
 
       <div style={estilos.formCard}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-          <Edit3 size={40} color={empresaConfig?.color_principal || "#3b82f6"} style={{ marginBottom: '10px' }} />
-          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '800' }}>Mi Perfil</h1>
-          <p style={{ color: esTemaOscuro ? '#94a3b8' : '#64748b', marginTop: '10px' }}>Actualiza tus datos para tus pedidos.</p>
+          <Edit3 size={40} color={cPrin} style={{ marginBottom: '10px' }} />
+          <h1 style={{ margin: 0, fontSize: '28px', fontWeight: '800', color: sys.text }}>Mi Perfil</h1>
+          <p style={{ color: sys.sub, marginTop: '10px' }}>Actualiza tus datos para tus pedidos.</p>
         </div>
 
         <form onSubmit={guardarPerfil}>
