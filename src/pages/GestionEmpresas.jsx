@@ -236,7 +236,7 @@ useEffect(() => { cargar(); }, [cargar]);
       const { data, error: ee } = await supabase.from('empresas').insert([{
         nombre, rut, slug, email_admin: email, licencia, plan, modulos,
         usa_inventario: modulos.inventario || false, usa_citas: modulos.agenda || false,
-        color_principal: color, logo_url: logoUrl,
+        color_principal: colorPrin, color_secundario: colorSec, color_terciario: colorTer, logo_url: logoUrl,
         hora_apertura: horaAp, hora_cierre: horaCi, intervalo_citas: intCitas, estado: 'activa',
       }]).select();
       if (ee) throw ee;
@@ -281,8 +281,9 @@ useEffect(() => { cargar(); }, [cargar]);
           </div>`,
         });
       }
-      setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro'));
-      setColor('#3b82f6'); setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setPaso(1);
+      setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro')); 
+      setColorPrin('#3b82f6'); setColorSec('#0f172a'); setColorTer('#f59e0b'); 
+      setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setPaso(1);
       cargar();
     } catch (err) { Swal.fire('Error', err.message, 'error'); }
     finally { setEnviando(false); }
@@ -291,7 +292,7 @@ useEffect(() => { cargar(); }, [cargar]);
   async function guardarEdicion() {
     setGuardando(true);
     try {
-      const { error } = await supabase.from('empresas').update({ plan: editPlan, modulos: editMods, usa_inventario: editMods.inventario || false, usa_citas: editMods.agenda || false }).eq('id', editEmp.id);
+      const { error } = await supabase.from('empresas').update({ plan: editPlan, modulos: editMods, usa_inventario: editMods.inventario || false, usa_citas: editMods.agenda || false, color_principal: editColorPrin, color_secundario: editColorSec, color_terciario: editColorTer }).eq('id', editEmp.id);
       if (error) throw error;
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambios guardados', showConfirmButton: false, timer: 2500 });
       setEditEmp(null); cargar();
@@ -442,13 +443,13 @@ useEffect(() => { cargar(); }, [cargar]);
                     <input type="email" placeholder="admin@empresa.com" value={email} onChange={e => setEmail(e.target.value)} style={{ ...inp, borderColor: email ? '#3b82f6' : t.inputBorder }} required />
                   </div>
                   <div>
-                    <label style={lbl}><Palette size={9} style={{ display: 'inline', marginRight: '3px' }} />Color de marca</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: `1.5px solid ${t.inputBorder}`, padding: '7px 10px', borderRadius: '8px', background: t.input }}>
-                      <div style={{ width: '22px', height: '22px', borderRadius: '5px', background: color, flexShrink: 0, position: 'relative', overflow: 'hidden' }}>
-                        <input type="color" value={color} onChange={e => setColor(e.target.value)} style={{ opacity: 0, position: 'absolute', inset: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
-                      </div>
-                      <span style={{ fontSize: '11px', color: t.inputText, fontFamily: 'monospace', fontWeight: '600' }}>{color.toUpperCase()}</span>
+                    <label style={lbl}><Palette size={9} style={{ display: 'inline', marginRight: '3px' }} />Colores de la marca</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', border: `1.5px solid ${t.inputBorder}`, padding: '6px 8px', borderRadius: '8px', background: t.input }}>
+                      <input type="color" title="Principal (Botones/Acciones)" value={colorPrin} onChange={e => setColorPrin(e.target.value)} style={{ width: '100%', height: '24px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }} />
+                      <input type="color" title="Secundario (Fondos/Sidebar)" value={colorSec} onChange={e => setColorSec(e.target.value)} style={{ width: '100%', height: '24px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }} />
+                      <input type="color" title="Terciario (Acentos/Alertas)" value={colorTer} onChange={e => setColorTer(e.target.value)} style={{ width: '100%', height: '24px', padding: 0, border: 'none', borderRadius: '4px', cursor: 'pointer' }} />
                     </div>
+                    <p style={{margin: '3px 0 0', fontSize: '9px', color: t.muted}}>Prin / Secun / Terc</p>
                   </div>
                   <div>
                     <label style={lbl}><ImageIcon size={9} style={{ display: 'inline', marginRight: '3px' }} />Logo (opcional)</label>
@@ -498,7 +499,7 @@ useEffect(() => { cargar(); }, [cargar]);
                   {[
                     ['Empresa', nombre], ['RUT', rut], ['Email admin', email],
                     ['Plan', plan.toUpperCase()], ['Módulos activos', `${Object.values(modulos).filter(Boolean).length}`],
-                    ['Color', <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><span style={{ width: '12px', height: '12px', borderRadius: '3px', background: color, display: 'inline-block' }} />{color}</span>],
+                    ['Colores', <div style={{ display: 'flex', gap: '4px' }}><div style={{ width: '12px', height: '12px', borderRadius: '3px', background: colorPrin }} title="Principal"/><div style={{ width: '12px', height: '12px', borderRadius: '3px', background: colorSec }} title="Secundario"/><div style={{ width: '12px', height: '12px', borderRadius: '3px', background: colorTer }} title="Terciario"/></div>],
                   ].map(([l, v]) => (
                     <div key={l} style={{ background: t.cardSolid, border: `1px solid ${t.border}`, borderRadius: '8px', padding: '10px 12px' }}>
                       <p style={{ margin: '0 0 2px', fontSize: '9px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{l}</p>
@@ -683,7 +684,7 @@ useEffect(() => { cargar(); }, [cargar]);
 
                           <td style={{ padding: '10px 14px' }}>
                             <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                              <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); }}
+                              <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); setEditColorPrin(emp.color_principal || '#3b82f6'); setEditColorSec(emp.color_secundario || '#0f172a'); setEditColorTer(emp.color_terciario || '#f59e0b'); }}
                                 title="Configurar módulos y plan"
                                 style={{ padding: '5px 10px', background: '#3b82f618', color: '#60a5fa', border: '1px solid #3b82f630', borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Edit3 size={11} />Configurar
@@ -735,6 +736,20 @@ useEffect(() => { cargar(); }, [cargar]);
               </button>
             </div>
             <div style={{ padding: '18px 22px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px', marginBottom: '20px' }}>
+                <div>
+                  <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px 0' }}>Color Principal</p>
+                  <input type="color" value={editColorPrin} onChange={e => setEditColorPrin(e.target.value)} style={{ width: '100%', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer' }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px 0' }}>Color Secundario</p>
+                  <input type="color" value={editColorSec} onChange={e => setEditColorSec(e.target.value)} style={{ width: '100%', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer' }} />
+                </div>
+                <div>
+                  <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px 0' }}>Color Terciario</p>
+                  <input type="color" value={editColorTer} onChange={e => setEditColorTer(e.target.value)} style={{ width: '100%', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer' }} />
+                </div>
+              </div>
               <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 10px 0' }}>Plan de suscripción</p>
               <SelectorPlan planActual={editPlan} onChange={p => { setEditPlan(p); setEditMods(getModulosPorDefecto(p)); }} t={t} />
               <div style={{ height: '1px', background: t.border, margin: '16px 0' }} />

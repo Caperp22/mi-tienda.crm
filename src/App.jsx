@@ -47,6 +47,8 @@ function useAuth() {
     usa_inventario: true,
     usa_citas: true,
     color_principal: '#3b82f6',
+    color_secundario: '#0f172a',
+    color_terciario: '#f59e0b',
     logo_url: null,
     hora_apertura: '09:00',
     hora_cierre: '18:00',
@@ -110,7 +112,7 @@ function useAuth() {
       }
 
       if (currentEmpresaId) {
-        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, slug, estado').eq('id', currentEmpresaId).maybeSingle();
+        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, color_secundario, color_terciario, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, slug, estado').eq('id', currentEmpresaId).maybeSingle();
         if (empData) {
           setEmpresaNombre(empData.nombre);
           // Guardamos la configuración visual y de módulos
@@ -547,14 +549,17 @@ function App() {
   // --- MUNDO ADMINISTRADOR DE EMPRESA ---
   if (rol === 'admin') {
     const d = esTemaOscuro;
-    const color = empresaConfig?.color_principal || '#3b82f6';
+    const color    = empresaConfig?.color_principal || '#3b82f6';
+    const colorSec = empresaConfig?.color_secundario || '#0f172a';
+    const colorTer = empresaConfig?.color_terciario || '#f59e0b';
+    
     const adm = {
-      page:    d ? '#0a0f1a' : '#f1f5f9',
-      topbar:  d ? '#0d1424' : 'white',
-      border:  d ? 'rgba(255,255,255,0.07)' : '#e2e8f0',
-      text:    d ? '#f0f4ff' : '#0f172a',
-      sub:     d ? '#94a3b8' : '#64748b',
-      content: d ? '#0a0f1a' : '#f1f5f9',
+      page:    d ? `color-mix(in srgb, ${colorSec} 15%, black)` : `color-mix(in srgb, ${colorSec} 3%, white)`,
+      topbar:  d ? `color-mix(in srgb, ${colorSec} 25%, black)` : 'white',
+      border:  d ? `color-mix(in srgb, ${colorSec} 40%, black)` : `color-mix(in srgb, ${colorSec} 15%, white)`,
+      text:    d ? '#f0f4ff' : `color-mix(in srgb, ${colorSec} 90%, black)`,
+      sub:     d ? '#94a3b8' : `color-mix(in srgb, ${colorSec} 60%, black)`,
+      content: d ? `color-mix(in srgb, ${colorSec} 15%, black)` : `color-mix(in srgb, ${colorSec} 3%, white)`,
     };
     return (
       <div className="admin-container" style={{ display: 'flex', fontFamily: 'system-ui,sans-serif', margin: 0, padding: 0, height: '100vh', overflow: 'hidden', background: adm.page }}>
@@ -588,7 +593,7 @@ function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '12px', color: adm.sub }}>{usuario.email}</span>
               <button onClick={() => setEsTemaOscuro(v => !v)} style={{
-                background: d ? 'rgba(255,255,255,0.07)' : '#f1f5f9',
+                background: d ? `color-mix(in srgb, ${colorSec} 40%, black)` : `color-mix(in srgb, ${colorSec} 8%, white)`,
                 border: `1px solid ${adm.border}`, borderRadius: '8px',
                 width: '34px', height: '34px', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', color: adm.sub,
@@ -608,7 +613,7 @@ function App() {
               </div>
             ) : (
               <Routes>
-                <Route path="/"            element={<DashboardAdmin dark={d} color={color} empresaId={empresaId} />} />
+                <Route path="/"            element={<DashboardAdmin dark={d} color={color} empresaConfig={empresaConfig} empresaId={empresaId} />} />
                 {moduloHabilitado(empresaConfig, 'tienda')      && <Route path="/tienda-admin"  element={<TiendaAdmin empresaId={empresaId} empresaConfig={empresaConfig} dark={d} color={color} />} />}
                 {moduloHabilitado(empresaConfig, 'agenda')     && <Route path="/agenda"      element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} dark={d} color={color} />} />}
                 {moduloHabilitado(empresaConfig, 'servicios')  && <Route path="/servicios"    element={<Servicios empresaId={empresaId} dark={d} color={color} />} />}

@@ -67,10 +67,12 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
   const plan = empresaConfig?.plan || 'básico';
   const planCfg = PLAN_CONFIG[plan] || PLAN_CONFIG['básico'];
   const colorActivo = color || empresaConfig?.color_principal || '#38bdf8';
+  const colorSec = empresaConfig?.color_secundario || '#0f172a';
+  const colorTer = empresaConfig?.color_terciario || '#f59e0b';
 
   const sideBg = dark
-    ? 'linear-gradient(180deg, #04080f 0%, #080e1a 100%)'
-    : 'linear-gradient(180deg, #0a0f1e 0%, #0f172a 100%)';
+    ? `linear-gradient(180deg, color-mix(in srgb, ${colorSec} 25%, black) 0%, color-mix(in srgb, ${colorSec} 5%, black) 100%)`
+    : `linear-gradient(180deg, color-mix(in srgb, ${colorSec} 95%, black) 0%, color-mix(in srgb, ${colorSec} 75%, black) 100%)`;
 
   return (
     <div
@@ -83,7 +85,7 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
-        borderRight: dark ? '1px solid rgba(255,255,255,0.04)' : '1px solid rgba(255,255,255,0.07)',
+        borderRight: dark ? `1px solid color-mix(in srgb, ${colorSec} 30%, black)` : `1px solid color-mix(in srgb, ${colorSec} 85%, black)`,
         overflow: 'hidden',
       }}
     >
