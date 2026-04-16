@@ -59,13 +59,18 @@ function Cupones({ empresaId, dark = false, color = '#3b82f6' }) {
   }
 
   async function toggleActivo(c) {
-    await supabase.from('cupones').update({ activo: !c.activo }).eq('id', c.id);
+    const { error } = await supabase.from('cupones').update({ activo: !c.activo }).eq('id', c.id);
+    if (error) return Swal.fire('Error', error.message, 'error');
     recargar();
   }
 
   async function eliminar(id) {
     const ok = await Swal.fire({ title: '¿Eliminar cupón?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' });
-    if (ok.isConfirmed) { await supabase.from('cupones').delete().eq('id', id); recargar(); }
+    if (ok.isConfirmed) {
+      const { error } = await supabase.from('cupones').delete().eq('id', id);
+      if (error) return Swal.fire('Error', error.message, 'error');
+      recargar();
+    }
   }
 
   function copiar(codigo) {

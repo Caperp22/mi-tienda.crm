@@ -69,7 +69,11 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
 
   async function eliminar(id) {
     const ok = await Swal.fire({ title: '¿Eliminar producto?', text: 'No podrás deshacerlo', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' });
-    if (ok.isConfirmed) { await supabase.from('productos').delete().eq('id', id); obtener(); }
+    if (ok.isConfirmed) {
+      const { error } = await supabase.from('productos').delete().eq('id', id);
+      if (error) return Swal.fire('Error', error.message, 'error');
+      obtener();
+    }
   }
 
   const filtrados = productos.filter(p =>

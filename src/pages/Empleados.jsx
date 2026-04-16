@@ -57,13 +57,18 @@ function Empleados({ empresaId, dark = false, color = '#3b82f6' }) {
   }
 
   async function toggleActivo(emp) {
-    await supabase.from('empleados').update({ activo: !emp.activo }).eq('id', emp.id);
+    const { error } = await supabase.from('empleados').update({ activo: !emp.activo }).eq('id', emp.id);
+    if (error) return Swal.fire('Error', error.message, 'error');
     recargar();
   }
 
   async function eliminar(id) {
     const ok = await Swal.fire({ title: '¿Eliminar empleado?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' });
-    if (ok.isConfirmed) { await supabase.from('empleados').delete().eq('id', id); recargar(); }
+    if (ok.isConfirmed) {
+      const { error } = await supabase.from('empleados').delete().eq('id', id);
+      if (error) return Swal.fire('Error', error.message, 'error');
+      recargar();
+    }
   }
 
   const activos   = empleados.filter(e => e.activo).length;

@@ -53,12 +53,15 @@ function Fidelizacion({ empresaId, dark = false, color = '#3b82f6' }) {
   async function ajustarPuntos(clienteId, delta) {
     const item = ranking.find(r => r.cliente_id === clienteId);
     const nuevos = Math.max(0, (item?.puntos || 0) + delta);
+    let error;
     if (item) {
-      await supabase.from('puntos_fidelizacion').update({ puntos: nuevos }).eq('id', item.id);
+      ({ error } = await supabase.from('puntos_fidelizacion').update({ puntos: nuevos }).eq('id', item.id));
     } else {
-      await supabase.from('puntos_fidelizacion').insert([{ empresa_id: empresaId, cliente_id: clienteId, puntos: Math.max(0, delta) }]);
+      ({ error } = await supabase.from('puntos_fidelizacion').insert([{ empresa_id: empresaId, cliente_id: clienteId, puntos: Math.max(0, delta) }]));
     }
-    const { data: pts } = await supabase.from('puntos_fidelizacion').select('*, clientes(nombre, correo)').eq('empresa_id', empresaId).order('puntos', { ascending: false }).limit(20);
+    if (error) return Swal.fire('Error', error.message, 'error');
+    const { data: pts, error: errLoad } = await supabase.from('puntos_fidelizacion').select('*, clientes(nombre, correo)').eq('empresa_id', empresaId).order('puntos', { ascending: false }).limit(20);
+    if (errLoad) return Swal.fire('Error', errLoad.message, 'error');
     setRanking(pts || []);
   }
 

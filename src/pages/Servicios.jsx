@@ -56,7 +56,11 @@ function Servicios({ empresaId, dark = false, color = '#3b82f6' }) {
 
   async function eliminar(id) {
     const ok = await Swal.fire({ title: '¿Eliminar servicio?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' });
-    if (ok.isConfirmed) { await supabase.from('servicios').delete().eq('id', id); obtener(); }
+    if (ok.isConfirmed) {
+      const { error } = await supabase.from('servicios').delete().eq('id', id);
+      if (error) return Swal.fire('Error', error.message, 'error');
+      obtener();
+    }
   }
 
   const fmt = n => n ? `$${Number(n).toLocaleString('es-CO')}` : '—';

@@ -43,7 +43,10 @@ function GestionAdmins({ empresaId, dark = false, color = '#3b82f6' }) {
 
     // Crear cuenta en Supabase Auth con contraseña temporal
     const pass = Math.random().toString(36).slice(2, 10);
-    await supabaseNoSession.auth.signUp({ email: nuevoCorreo.toLowerCase(), password: pass });
+    const { error: authError } = await supabaseNoSession.auth.signUp({ email: nuevoCorreo.toLowerCase(), password: pass });
+    if (authError && !authError.message.includes('already registered')) {
+      return Swal.fire('Error al crear cuenta', authError.message, 'error');
+    }
 
     const { data, error } = await supabase
       .from('administradores')
@@ -61,7 +64,8 @@ function GestionAdmins({ empresaId, dark = false, color = '#3b82f6' }) {
     const ok = await Swal.fire({ title: '¿Revocar acceso?', text: `${email} perderá acceso inmediatamente.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', confirmButtonText: 'Revocar', cancelButtonText: 'Cancelar' });
     if (ok.isConfirmed) {
       const { error } = await supabase.from('administradores').delete().eq('id', id);
-      if (!error) setAdmins(admins.filter(a => a.id !== id));
+      if (error) return Swal.fire('Error', error.message, 'error');
+      setAdmins(admins.filter(a => a.id !== id));
     }
   }
 

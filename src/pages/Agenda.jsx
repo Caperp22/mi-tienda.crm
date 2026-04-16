@@ -71,8 +71,9 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
   }
 
   async function eliminarBloqueo(id) {
-    await supabase.from('fechas_bloqueadas').delete().eq('id', id);
-    setFechasBloqueadas(fechasBloqueadas.filter(b => b.id !== id));
+    const { error } = await supabase.from('fechas_bloqueadas').delete().eq('id', id);
+    if (error) return Swal.fire('Error', error.message, 'error');
+    setFechasBloqueadas(prev => prev.filter(b => b.id !== id));
   }
 
   /* ─── Calendario ────────────────────────────────────────── */

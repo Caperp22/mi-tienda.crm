@@ -47,8 +47,12 @@ function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, 
       const pedido = pedidos.find(p => p.id === id);
       if (pedido?.productos) {
         for (const prod of pedido.productos) {
-          const { data: bd } = await supabase.from('productos').select('stock').eq('id', prod.id).single();
-          if (bd) await supabase.from('productos').update({ stock: Math.max(0, bd.stock - prod.cantidad) }).eq('id', prod.id);
+          const { data: bd, error: errStock } = await supabase.from('productos').select('stock').eq('id', prod.id).single();
+          if (errStock) continue;
+          if (bd) {
+            const { error: errUpd } = await supabase.from('productos').update({ stock: Math.max(0, bd.stock - prod.cantidad) }).eq('id', prod.id);
+            if (errUpd) console.warn('Stock no actualizado para producto', prod.id, errUpd.message);
+          }
         }
       }
       Swal.fire({ icon: 'success', title: '¡Venta cerrada!', text: 'Inventario actualizado automáticamente.', timer: 2500, showConfirmButton: false });

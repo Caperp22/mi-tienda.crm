@@ -74,7 +74,8 @@ function POS({ empresaId, dark = false, color = '#3b82f6' }) {
 
     // Descontar stock
     for (const item of carrito) {
-      const { data: bd } = await supabase.from('productos').select('stock').eq('id', item.id).single();
+      const { data: bd, error: errStock } = await supabase.from('productos').select('stock').eq('id', item.id).single();
+      if (errStock) continue;
       if (bd) await supabase.from('productos').update({ stock: Math.max(0, bd.stock - item.cantidad) }).eq('id', item.id);
     }
 
