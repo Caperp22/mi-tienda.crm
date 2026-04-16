@@ -12,6 +12,7 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
   const [nuevoBloqueo,     setNuevoBloqueo]     = useState({ fecha: '', motivo: '' });
   const [bloqueando,       setBloqueando]       = useState(false);
   const [citaSeleccionada, setCitaSeleccionada] = useState(null);
+  const [detallesCliente,  setDetallesCliente]  = useState(null);
 
   /* ─── Tema ──────────────────────────────────────────────── */
   const t = {
@@ -47,10 +48,33 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
 
   /* ─── Acciones ──────────────────────────────────────────── */
   async function cambiarEstado(id, nuevoEstado) {
+    const cita = citas.find(c => c.id === id);
+
+    // Si se está cancelando, pedir confirmación
+    if (nuevoEstado === 'Cancelada') {
+      const { isConfirmed } = await Swal.fire({
+        title: '¿Cancelar esta cita?',
+        html: `Se cancelará la cita de <strong>${cita?.cliente_nombre || 'Cliente'}</strong> para el servicio de <strong>${cita?.servicio}</strong>.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonText: 'No, mantener',
+        confirmButtonText: 'Sí, cancelar cita'
+      });
+      if (!isConfirmed) return;
+    }
+
     const { error } = await supabase.from('citas').update({ estado: nuevoEstado }).eq('id', id);
     if (!error) {
       setCitas(citas.map(c => c.id === id ? { ...c, estado: nuevoEstado } : c));
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Cita ${nuevoEstado}`, showConfirmButton: false, timer: 1800 });
+
+      // Notificar por correo si se canceló
+      if (nuevoEstado === 'Cancelada' && cita?.cliente_email) {
+        const subject = encodeURIComponent('Cancelación de cita programada');
+        const body = encodeURIComponent(`Hola ${cita.cliente_nombre},\n\nLamentamos informarte que tu cita para el servicio de "${cita.servicio}" programada para el día ${cita.fecha} a las ${cita.hora?.substring(0,5)} ha sido cancelada.\n\nPor favor, contáctanos si deseas reprogramarla.\n\nSaludos cordiales.`);
+        window.location.href = `mailto:${cita.cliente_email}?subject=${subject}&body=${body}`;
+      }
     }
   }
 
@@ -75,6 +99,15 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
     const { error } = await supabase.from('fechas_bloqueadas').delete().eq('id', id);
     if (error) return Swal.fire('Error', error.message, 'error');
     setFechasBloqueadas(prev => prev.filter(b => b.id !== id));
+  }
+
+  async function abrirDetalles(cita) {
+    setCitaSeleccionada(cita);
+    setDetallesCliente(null);
+    if (cita.cliente_email) {
+      const { data } = await supabase.from('clientes').select('telefono, direccion').eq('correo', cita.cliente_email).eq('empresa_id', empresaId).maybeSingle();
+      if (data) setDetallesCliente(data);
+    }
   }
 
   /* ─── Calendario ────────────────────────────────────────── */
@@ -220,7 +253,7 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                    <button onClick={() => setCitaSeleccionada(cita)} style={{ padding: '7px 12px', borderRadius: '7px', border: `1px solid ${t.border}`, cursor: 'pointer', fontWeight: '600', fontSize: '12px', background: dark ? 'rgba(255,255,255,0.05)' : '#f8fafc', color: t.sub, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <button onClick={() => abrirDetalles(cita)} style={{ padding: '7px 12px', borderRadius: '7px', border: `1px solid ${t.border}`, cursor: 'pointer', fontWeight: '600', fontSize: '12px', background: dark ? 'rgba(255,255,255,0.05)' : '#f8fafc', color: t.sub, display: 'flex', alignItems: 'center', gap: '5px' }}>
                       <Eye size={14} /> Detalles
                     </button>
                     {cita.estado === 'Pendiente' ? (
@@ -267,6 +300,7 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
                 <div>
                   <p style={{ margin: '0 0 3px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Contacto</p>
                   <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600', wordBreak: 'break-all' }}>{citaSeleccionada.cliente_email}</p>
+                  {detallesCliente?.telefono && <p style={{ margin: '3px 0 0', fontSize: '13px', color: t.sub }}>📞 {detallesCliente.telefono}</p>}
                 </div>
               </div>
 
@@ -280,6 +314,13 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
                   <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14}/> {citaSeleccionada.hora?.substring(0,5)} hrs</p>
                 </div>
               </div>
+
+              {detallesCliente?.direccion && (
+                <div>
+                  <p style={{ margin: '0 0 3px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Dirección</p>
+                  <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600' }}>{detallesCliente.direccion}</p>
+                </div>
+              )}
 
               <div>
                 <p style={{ margin: '0 0 5px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Observaciones del cliente</p>

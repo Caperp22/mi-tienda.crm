@@ -10,6 +10,10 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
   const [productos, setProductos] = useState([]);
   const [mostrarCarrito, setMostrarCarrito] = useState(false);
 
+  const [codigoCupon, setCodigoCupon] = useState('');
+  const [cuponAplicado, setCuponAplicado] = useState(null);
+  const [validandoCupon, setValidandoCupon] = useState(false);
+
   const [carrito, setCarrito] = useState(() => {
     const carritoGuardado = localStorage.getItem('miCarrito');
     return carritoGuardado ? JSON.parse(carritoGuardado) : [];
@@ -53,6 +57,79 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
     setCarrito(carrito.map(item => item.id === id ? { ...item, cantidad: nuevaCantidad } : item));
   }
 
+  const fmt = n => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+
+  // Recálculo dinámico del descuento si el carrito cambia
+  const subtotal = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
+  let descuentoCalculado = 0;
+  if (cuponAplicado) {
+    const prodsAplicables = carrito.filter(i => !cuponAplicado.productos_aplicables || cuponAplicado.productos_aplicables.length === 0 || cuponAplicado.productos_aplicables.includes(i.id));
+    const subAplicable = prodsAplicables.reduce((s, i) => s + (i.precio * i.cantidad), 0);
+    if ((!cuponAplicado.minimo || subtotal >= cuponAplicado.minimo) && subAplicable > 0) {
+      descuentoCalculado = cuponAplicado.tipo === 'porcentaje' ? (subAplicable * cuponAplicado.valor) / 100 : Math.min(subAplicable, cuponAplicado.valor);
+    }
+  }
+
+  async function aplicarCupon() {
+    if (!codigoCupon.trim()) return;
+    setValidandoCupon(true);
+
+    const { data: cupon, error } = await supabase
+      .from('cupones')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .eq('codigo', codigoCupon.toUpperCase())
+      .single();
+
+    setValidandoCupon(false);
+
+    if (error || !cupon) {
+      return Swal.fire({ title: 'Cupón no válido', text: 'El código ingresado no existe o ha expirado.', icon: 'error', confirmButtonColor: cPrin });
+    }
+    if (!cupon.activo) {
+      return Swal.fire({ title: 'Cupón inactivo', text: 'Este cupón ya no está disponible.', icon: 'warning', confirmButtonColor: cPrin });
+    }
+    if (cupon.vence_en && new Date(cupon.vence_en) < new Date()) {
+      return Swal.fire({ title: 'Cupón vencido', text: 'Este código de descuento ha expirado.', icon: 'warning', confirmButtonColor: cPrin });
+    }
+
+    // Validar límite de usos generales
+    if (cupon.limite_usos && (cupon.usos_actuales || 0) >= cupon.limite_usos) {
+      return Swal.fire({ title: 'Límite alcanzado', text: 'Este cupón ha alcanzado su límite de usos.', icon: 'error', confirmButtonColor: cPrin });
+    }
+
+    // Validar si el cliente ya usó este cupón en una compra anterior
+    const { data: usoPrevio } = await supabase
+      .from('pedidos')
+      .select('id')
+      .eq('cliente_email', usuario.email)
+      .eq('cupon_aplicado', cupon.codigo)
+      .limit(1);
+
+    if (usoPrevio && usoPrevio.length > 0) {
+      return Swal.fire({ title: 'Cupón ya utilizado', text: 'Ya has canjeado este código de descuento en una compra anterior.', icon: 'warning', confirmButtonColor: cPrin });
+    }
+
+    const productosEnCarritoAplicables = carrito.filter(item => 
+      !cupon.productos_aplicables || cupon.productos_aplicables.length === 0 || cupon.productos_aplicables.includes(item.id)
+    );
+    if (productosEnCarritoAplicables.length === 0) {
+      return Swal.fire({ title: 'Cupón no aplicable', text: 'Este cupón no es válido para los productos que tienes en tu carrito.', icon: 'warning', confirmButtonColor: cPrin });
+    }
+
+    const tempSubtotal = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
+    if (cupon.minimo && tempSubtotal < cupon.minimo) {
+      return Swal.fire({ title: 'Monto mínimo no alcanzado', text: `Necesitas una compra mínima de ${fmt(cupon.minimo)} para usar este cupón.`, icon: 'info', confirmButtonColor: cPrin });
+    }
+
+    setCuponAplicado(cupon);
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '¡Cupón aplicado!', showConfirmButton: false, timer: 2000 });
+  }
+
+  function quitarCupon() {
+    setCuponAplicado(null); setCodigoCupon('');
+  }
+
   async function confirmarPedido() {
       if (carrito.length === 0) return Swal.fire('Carrito vacío', 'Agrega productos', 'info');
       
@@ -75,29 +152,48 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
         return;
       }
 
-      const totalCalculado = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
+      const totalFinal = subtotal - descuentoCalculado;
 
       const { error } = await supabase.from('pedidos').insert([{
         cliente_email: usuario.email, 
         productos: carrito, 
-        total: totalCalculado, 
+        total: totalFinal, 
         estado: 'Pendiente',
-        empresa_id: empresaId
+        empresa_id: empresaId,
+        cupon_aplicado: cuponAplicado ? cuponAplicado.codigo : null,
+        descuento: descuentoCalculado > 0 ? descuentoCalculado : null,
       }]);
 
       if (error) return Swal.fire('Error', 'Hubo un problema', 'error');
 
+      // Incrementar el contador de usos del cupón
+      if (cuponAplicado) {
+        const { error: errCupon } = await supabase
+          .from('cupones')
+          .update({ usos_actuales: (cuponAplicado.usos_actuales || 0) + 1 })
+          .eq('id', cuponAplicado.id);
+        
+        // No es un error crítico para el usuario, solo lo logueamos en consola
+        if (errCupon) console.error('Error al actualizar el uso del cupón:', errCupon);
+      }
+
       // Armamos el mensaje de WhatsApp súper completo
       let textoMensaje = "🛍️ *¡Nuevo Pedido Confirmado!*\n\n";
       carrito.forEach(item => { textoMensaje += `▪️ ${item.cantidad}x ${item.nombre}\n`; });
-      
-      textoMensaje += `\n💰 *Total: $${totalCalculado}*\n`;
+
+      textoMensaje += `\nSubtotal: $${subtotal.toLocaleString('es-CO')}`;
+      if (descuentoCalculado > 0) {
+        textoMensaje += `\nDescuento (${cuponAplicado.codigo}): -$${descuentoCalculado.toLocaleString('es-CO')}`;
+      }
+      textoMensaje += `\n💰 *Total a pagar: $${totalFinal.toLocaleString('es-CO')}*\n`;
       textoMensaje += `--------------------------\n`;
       textoMensaje += `👤 *Cliente:* ${nombre} (${usuario.email})\n`;
       textoMensaje += `📞 *Teléfono:* ${telefono}\n`;
       textoMensaje += `📍 *Dirección de Envío:* ${direccion}`;
 
       setCarrito([]);
+      setCuponAplicado(null);
+      setCodigoCupon('');
       setMostrarCarrito(false);
       Swal.fire({ icon: 'success', title: '¡Pedido Registrado!', timer: 2000, showConfirmButton: false });
       
@@ -106,7 +202,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
       }, 2000);
     }
 
-  const totalCarrito = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
+  const totalFinal = subtotal - descuentoCalculado;
   const totalArticulos = carrito.reduce((suma, item) => suma + item.cantidad, 0);
 
   const d = esTemaOscuro;
@@ -280,9 +376,37 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
 
         {carrito.length > 0 && (
           <div style={{ borderTop: `2px solid ${sys.border}`, paddingTop: '30px', marginTop: 'auto' }}>
+            {cuponAplicado ? (
+              <div style={{ background: d ? 'rgba(16,185,129,0.1)' : '#f0fdf4', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <div style={{ fontSize: '13px' }}>
+                  <span style={{ color: '#059669', fontWeight: 'bold' }}>Cupón {cuponAplicado.codigo} aplicado</span>
+                  {descuentoCalculado === 0 && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#ef4444' }}>Condiciones de compra no alcanzadas</p>}
+                </div>
+                <button onClick={quitarCupon} style={{ background: 'none', border: 'none', color: '#059669', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Quitar</button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '15px' }}>
+                <input style={{ flex: 1, padding: '10px', borderRadius: '8px', border: `1px solid ${sys.border}`, background: sys.bg, color: sys.text, fontSize: '13px', textTransform: 'uppercase' }} placeholder="CÓDIGO DE DESCUENTO" value={codigoCupon} onChange={e => setCodigoCupon(e.target.value)} />
+                <button onClick={aplicarCupon} disabled={validandoCupon || !codigoCupon} style={{ padding: '10px 16px', background: sys.hover, color: sys.text, border: `1px solid ${sys.border}`, borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '13px', opacity: validandoCupon || !codigoCupon ? 0.6 : 1 }}>
+                  {validandoCupon ? '...' : 'Aplicar'}
+                </button>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: sys.sub, marginBottom: '8px' }}>
+              <span>Subtotal:</span>
+              <span>{fmt(subtotal)}</span>
+            </div>
+            {descuentoCalculado > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', color: '#10b981', fontWeight: '600' }}>
+                <span>Descuento ({cuponAplicado.codigo}):</span>
+                <span>- {fmt(descuentoCalculado)}</span>
+              </div>
+            )}
+            <div style={{ height: '1px', background: sys.border, margin: '12px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: '800', marginBottom: '24px', color: sys.text }}>
               <span>Total:</span>
-              <span style={{ color: cPrin }}>${totalCarrito}</span>
+              <span style={{ color: cPrin }}>{fmt(totalFinal)}</span>
             </div>
             <button onClick={confirmarPedido} style={{ ...estilos.btnPrimary, background: cPrin, padding: '16px', fontSize: '1.1rem' }}>Confirmar Pedido</button>
           </div>

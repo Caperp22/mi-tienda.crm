@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabase';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bell, User, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react'; 
+import { Sun, Moon, Bell, User, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaNombre, empresaConfig }) {
   const navigate = useNavigate();
@@ -9,12 +10,40 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
   const [citas, setCitas] = useState([]);
 
   useEffect(() => {
-    async function obtenerCitas() {
-      const { data } = await supabase.from('citas').select('*').eq('cliente_email', usuario?.email).order('fecha', { ascending: false }); 
+    const obtenerCitas = async () => {
+      if (!usuario?.email) return;
+      const { data } = await supabase.from('citas').select('*').eq('cliente_email', usuario.email).order('fecha', { ascending: false }); 
       if (data) setCitas(data);
-    }
+    };
     obtenerCitas();
   }, [usuario]);
+
+  async function cancelarCita(citaId) {
+    const cita = citas.find(c => c.id === citaId);
+    if (!cita) return;
+
+    const ahora = new Date();
+    const fechaCita = new Date(`${cita.fecha}T${cita.hora}`);
+    const horasDeAnticipacion = (fechaCita - ahora) / (1000 * 60 * 60);
+    const HORAS_MINIMAS = 2;
+
+    if (horasDeAnticipacion < HORAS_MINIMAS) {
+      return Swal.fire({ title: 'No se puede cancelar', text: `Las citas solo se pueden cancelar con al menos ${HORAS_MINIMAS} horas de anticipación.`, icon: 'warning', confirmButtonColor: cPrin });
+    }
+
+    const { isConfirmed } = await Swal.fire({ title: '¿Estás seguro?', text: `Se cancelará tu cita para "${cita.servicio}". Esta acción no se puede deshacer.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#ef4444', cancelButtonText: 'No, mantener cita', confirmButtonText: 'Sí, cancelar' });
+
+    if (isConfirmed) {
+      const { error } = await supabase.from('citas').update({ estado: 'Cancelada' }).eq('id', citaId);
+      if (error) { Swal.fire('Error', 'No se pudo cancelar la cita. Intenta de nuevo.', 'error'); } 
+      else { 
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cita cancelada', showConfirmButton: false, timer: 2000 }); 
+        setCitas(prevCitas => prevCitas.map(c => 
+          c.id === citaId ? { ...c, estado: 'Cancelada' } : c
+        ));
+      }
+    }
+  }
 
   const d = esTemaOscuro;
   const cPrin = empresaConfig?.color_principal || '#3b82f6';
@@ -136,9 +165,13 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
             if (cita.estado === 'Completada') { colorEstado = '#10b981'; bgEstado = d ? '#064e3b' : '#d1fae5'; }
             if (cita.estado === 'Cancelada') { colorEstado = '#ef4444'; bgEstado = d ? '#7f1d1d' : '#fee2e2'; }
 
+            const ahora = new Date();
+            const fechaCita = new Date(`${cita.fecha}T${cita.hora}`);
+            const puedeCancelar = (fechaCita - ahora) / (1000 * 60 * 60) >= 2;
+
             return (
-              <div key={cita.id} style={{...estilos.card, opacity: cita.estado === 'Cancelada' ? 0.6 : 1}}>
-                <div>
+              <div key={cita.id} style={{...estilos.card, opacity: cita.estado === 'Cancelada' ? 0.6 : 1, alignItems: 'flex-start'}}>
+                <div style={{ flex: 1, minWidth: '250px' }}>
                   <h3 style={{ margin: '0 0 10px 0', fontSize: '1.25rem', fontWeight: '800', color: sys.text }}>{cita.servicio}</h3>
                   <div style={{ color: sys.sub, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '5px' }}>
                     <Calendar size={16} /> {new Date(cita.fecha + "T00:00:00").toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -146,14 +179,29 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
                   <div style={{ color: sys.sub, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <Clock size={16} /> {cita.hora?.substring(0, 5)} hrs
                   </div>
+                  {cita.observaciones && (
+                    <div style={{ marginTop: '15px', padding: '12px', background: d ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.02)', borderRadius: '8px', border: `1px solid ${sys.border}`, fontSize: '13px', color: sys.sub, lineHeight: '1.5' }}>
+                      <strong style={{ color: sys.text, display: 'block', marginBottom: '4px' }}>Mis observaciones:</strong>
+                      {cita.observaciones}
+                    </div>
+                  )}
                 </div>
 
-                <div style={{ padding: '8px 16px', borderRadius: '999px', fontWeight: 'bold', fontSize: '14px', backgroundColor: bgEstado, color: colorEstado, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  {cita.estado === 'Pendiente' && <Clock size={16} />}
-                  {cita.estado === 'Completada' && <CheckCircle size={16} />}
-                  {cita.estado === 'Cancelada' && <XCircle size={16} />}
-                  {cita.estado}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px', flexShrink: 0 }}>
+                  <div style={{ padding: '8px 16px', borderRadius: '999px', fontWeight: 'bold', fontSize: '14px', backgroundColor: bgEstado, color: colorEstado, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    {cita.estado === 'Pendiente' && <Clock size={16} />}
+                    {cita.estado === 'Completada' && <CheckCircle size={16} />}
+                    {cita.estado === 'Cancelada' && <XCircle size={16} />}
+                    {cita.estado}
+                  </div>
+
+                  {cita.estado === 'Pendiente' && puedeCancelar && (
+                    <button onClick={() => cancelarCita(cita.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <XCircle size={14} /> Cancelar Cita
+                    </button>
+                  )}
                 </div>
+
               </div>
             )
           })

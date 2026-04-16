@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Clock, Truck, CheckCircle2, Eye, X, Package } from 'lucide-react';
+import { Clock, Truck, CheckCircle2, Eye, X, Package, Tag } from 'lucide-react';
 
 const ESTADOS = {
   Pendiente: { color: '#f59e0b', bg: '#fffbeb', bgDark: 'rgba(245,158,11,0.1)', border: '#fde68a', label: 'Pendiente', icon: Clock },
@@ -12,6 +12,7 @@ const ESTADOS = {
 function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, empresaId, dark = false, color = '#3b82f6' }) {
   const [pedidos,           setPedidos]           = useState([]);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null);
+  const [filtrarCupones,    setFiltrarCupones]    = useState(false);
 
   /* ─── Tema ──────────────────────────────────────────────── */
   const t = {
@@ -69,16 +70,37 @@ function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Encabezado */}
-      <div style={{ marginBottom: '20px' }}>
-        <h1 style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: '800', color: t.text }}>Pedidos</h1>
-        <p style={{ margin: 0, fontSize: '13px', color: t.sub }}>Flujo de trabajo de las compras de tus clientes.</p>
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <div>
+          <h1 style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: '800', color: t.text }}>Pedidos</h1>
+          <p style={{ margin: 0, fontSize: '13px', color: t.sub }}>Flujo de trabajo de las compras de tus clientes.</p>
+        </div>
+        <button 
+          onClick={() => setFiltrarCupones(f => !f)}
+          style={{
+            padding: '8px 14px',
+            border: `1px solid ${filtrarCupones ? color : t.border}`,
+            background: filtrarCupones ? `${color}18` : 'transparent',
+            color: filtrarCupones ? color : t.sub,
+            borderRadius: '9px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: '600',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+            transition: 'all 0.2s'
+          }}>
+          <Tag size={14} />
+          {filtrarCupones ? 'Mostrando con cupón' : 'Todos los pedidos'}
+        </button>
       </div>
 
       {/* Kanban */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', flex: 1, minHeight: 0 }}>
         {cols.map(estado => {
           const cfg   = ESTADOS[estado];
-          const lista = pedidos.filter(p => p.estado === estado);
+          const lista = pedidos.filter(p => p.estado === estado && (!filtrarCupones || p.cupon_aplicado));
           const Icon  = cfg.icon;
           return (
             <div key={estado} style={{ background: dark ? cfg.bgDark : cfg.bg, borderRadius: '12px', border: `1px solid ${dark ? 'rgba(255,255,255,0.07)' : cfg.border}`, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -113,6 +135,13 @@ function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, 
                     <p style={{ margin: '0 0 10px', fontSize: '15px', fontWeight: '800', color: cfg.color }}>
                       {fmt(p.total)}
                     </p>
+                    {p.descuento > 0 && (
+                      <div style={{ marginTop: '-5px', marginBottom: '8px' }}>
+                        <span style={{ background: dark ? 'rgba(16,185,129,0.1)' : '#f0fdf4', color: '#059669', border: '1px solid rgba(16,185,129,0.2)', padding: '2px 7px', borderRadius: '6px', fontSize: '10px', fontWeight: 'bold' }}>
+                          -{fmt(p.descuento)} ({p.cupon_aplicado})
+                        </span>
+                      </div>
+                    )}
                     <button onClick={() => setPedidoSeleccionado(p)} style={{
                       width: '100%', padding: '7px', border: `1px solid ${t.border}`,
                       background: dark ? 'rgba(255,255,255,0.05)' : '#f8fafc',
@@ -180,9 +209,24 @@ function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, 
             </div>
 
             {/* Total */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: dark ? 'rgba(255,255,255,0.04)' : '#f8fafc', padding: '16px 18px', borderRadius: '10px', border: `1px solid ${t.border}` }}>
-              <span style={{ fontWeight: '700', color: t.sub }}>TOTAL</span>
-              <span style={{ fontSize: '22px', fontWeight: '900', color: color }}>{fmt(pedidoSeleccionado.total)}</span>
+            <div style={{ background: dark ? 'rgba(255,255,255,0.04)' : '#f8fafc', padding: '16px 18px', borderRadius: '10px', border: `1px solid ${t.border}` }}>
+              {pedidoSeleccionado.descuento > 0 && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: t.sub, marginBottom: '8px' }}>
+                    <span>Subtotal:</span>
+                    <span>{fmt(pedidoSeleccionado.total + pedidoSeleccionado.descuento)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10b981', fontWeight: '600', marginBottom: '10px' }}>
+                    <span>Descuento ({pedidoSeleccionado.cupon_aplicado}):</span>
+                    <span>-{fmt(pedidoSeleccionado.descuento)}</span>
+                  </div>
+                  <div style={{ height: '1px', background: t.border, margin: '10px 0' }} />
+                </>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: '700', color: t.sub }}>TOTAL</span>
+                <span style={{ fontSize: '22px', fontWeight: '900', color: color }}>{fmt(pedidoSeleccionado.total)}</span>
+              </div>
             </div>
           </div>
         </div>

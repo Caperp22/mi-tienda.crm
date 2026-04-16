@@ -16,6 +16,8 @@ function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, noti
     obtenerPedidos();
   }, [usuario]);
 
+  const fmt = n => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
+
   const d = esTemaOscuro;
   const cPrin = empresaConfig?.color_principal || '#3b82f6';
   const cSec  = empresaConfig?.color_secundario || '#0f172a';
@@ -134,8 +136,20 @@ function MisPedidos({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, noti
           pedidos.map(pedido => (
             <div key={pedido.id} style={estilos.card}>
               <div>
-                <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: sys.sub }}>Pedido #{pedido.id}</p>
-                <p style={{ margin: 0, fontWeight: '800', fontSize: '1.25rem', color: sys.text }}>Total: <span style={{ color: cPrin }}>${pedido.total}</span></p>
+                <p style={{ margin: '0 0 5px 0', fontSize: '14px', color: sys.sub }}>Pedido #{String(pedido.id).slice(0, 8)}</p>
+                {pedido.descuento > 0 && (
+                  <p style={{ margin: '0 0 2px 0', fontSize: '13px', color: sys.sub, textDecoration: 'line-through' }}>
+                    Subtotal: {fmt(pedido.total + pedido.descuento)}
+                  </p>
+                )}
+                <p style={{ margin: 0, fontWeight: '800', fontSize: '1.25rem', color: sys.text }}>Total: <span style={{ color: cPrin }}>{fmt(pedido.total)}</span></p>
+                {pedido.cupon_aplicado && (
+                  <div style={{ marginTop: '6px' }}>
+                    <span style={{ background: d ? 'rgba(16,185,129,0.1)' : '#f0fdf4', color: '#059669', border: '1px solid rgba(16,185,129,0.2)', padding: '3px 9px', borderRadius: '6px', fontSize: '11px', fontWeight: 'bold' }}>
+                      Cupón: {pedido.cupon_aplicado} (-{fmt(pedido.descuento)})
+                    </span>
+                  </div>
+                )}
               </div>
               <div style={{ flex: '1', minWidth: '200px' }}>
                 <p style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: 'bold', color: sys.text }}>Artículos:</p>
