@@ -10,6 +10,7 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
   const [servicio, setServicio] = useState('');
+  const [observaciones, setObservaciones] = useState('');
   
   const [fechasBloqueadas, setFechasBloqueadas] = useState([]);
   const [horasOcupadas, setHorasOcupadas] = useState([]);
@@ -86,6 +87,7 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
       fecha: fecha,
       hora: hora,
       servicio: servicio,
+      observaciones: observaciones,
       estado: 'Pendiente',
       empresa_id: empresaId
     }]);
@@ -248,6 +250,14 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
               </div>
             </>
           )}
+
+          <label style={estilos.label}>Observaciones o detalles (opcional)</label>
+          <textarea 
+            style={{ ...estilos.input, minHeight: '80px', resize: 'vertical' }} 
+            placeholder="Ej: Necesito que sea rápido, tengo alguna alergia, es para un evento especial..." 
+            value={observaciones} 
+            onChange={(e) => setObservaciones(e.target.value)} 
+          />
 
           <button type="submit" disabled={!fecha || !hora || !servicio || cargando} style={{...estilos.btnPrimary, opacity: (!fecha || !hora || !servicio) ? 0.5 : 1}}>
             {cargando ? 'Procesando...' : 'Confirmar Reserva'}

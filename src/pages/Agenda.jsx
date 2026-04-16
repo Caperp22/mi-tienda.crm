@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Calendar, Clock, CheckCircle, XCircle, Trash2, ShieldAlert, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, Trash2, ShieldAlert, ChevronLeft, ChevronRight, Filter, Eye, X } from 'lucide-react';
 
 function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, dark = false, color = '#3b82f6' }) {
   const [citas,            setCitas]            = useState([]);
@@ -11,6 +11,7 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
   const [fechaSel,         setFechaSel]         = useState(null);
   const [nuevoBloqueo,     setNuevoBloqueo]     = useState({ fecha: '', motivo: '' });
   const [bloqueando,       setBloqueando]       = useState(false);
+  const [citaSeleccionada, setCitaSeleccionada] = useState(null);
 
   /* ─── Tema ──────────────────────────────────────────────── */
   const t = {
@@ -219,6 +220,9 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
                     </p>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                    <button onClick={() => setCitaSeleccionada(cita)} style={{ padding: '7px 12px', borderRadius: '7px', border: `1px solid ${t.border}`, cursor: 'pointer', fontWeight: '600', fontSize: '12px', background: dark ? 'rgba(255,255,255,0.05)' : '#f8fafc', color: t.sub, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <Eye size={14} /> Detalles
+                    </button>
                     {cita.estado === 'Pendiente' ? (
                       <>
                         <button onClick={() => cambiarEstado(cita.id, 'Completada')} style={{ padding: '7px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '12px', background: dark ? 'rgba(16,185,129,0.15)' : '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -240,6 +244,53 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
           )}
         </div>
       </div>
+
+      {/* ── Modal de Detalles de Cita ───────────────────────── */}
+      {citaSeleccionada && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,13,26,0.75)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setCitaSeleccionada(null)}>
+          <div style={{ background: t.modal, border: `1px solid ${t.border}`, borderRadius: '16px', width: '100%', maxWidth: '440px', padding: '28px', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', borderBottom: `1px solid ${t.border}`, paddingBottom: '15px' }}>
+              <div>
+                <h2 style={{ margin: '0 0 5px', fontSize: '18px', fontWeight: '800', color: t.text }}>Detalles de la Reserva</h2>
+                <p style={{ margin: 0, fontSize: '13px', color: t.sub }}>{citaSeleccionada.servicio}</p>
+              </div>
+              <button onClick={() => setCitaSeleccionada(null)} style={{ background: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', border: 'none', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.sub }}><X size={15} /></button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div>
+                  <p style={{ margin: '0 0 3px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Cliente</p>
+                  <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600' }}>{citaSeleccionada.cliente_nombre}</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 3px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Contacto</p>
+                  <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600', wordBreak: 'break-all' }}>{citaSeleccionada.cliente_email}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                <div>
+                  <p style={{ margin: '0 0 3px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Fecha</p>
+                  <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}><Calendar size={14}/> {citaSeleccionada.fecha}</p>
+                </div>
+                <div>
+                  <p style={{ margin: '0 0 3px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Hora</p>
+                  <p style={{ margin: 0, fontSize: '14px', color: t.text, fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}><Clock size={14}/> {citaSeleccionada.hora?.substring(0,5)} hrs</p>
+                </div>
+              </div>
+
+              <div>
+                <p style={{ margin: '0 0 5px', fontSize: '11px', color: t.sub, textTransform: 'uppercase', fontWeight: '700' }}>Observaciones del cliente</p>
+                <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: '10px', padding: '15px', fontSize: '13px', color: citaSeleccionada.observaciones ? t.text : t.sub, lineHeight: '1.5' }}>
+                  {citaSeleccionada.observaciones || 'No se dejaron observaciones adicionales.'}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
