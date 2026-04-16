@@ -27,6 +27,7 @@ import POS from './pages/POS';
 import Empleados from './pages/Empleados';
 import Fidelizacion from './pages/Fidelizacion';
 import Reportes from './pages/Reportes';
+import TiendaAdmin from './pages/TiendaAdmin';
 
 import Tienda from './pages/Tienda';
 import Login from './pages/Login';
@@ -608,6 +609,7 @@ function App() {
             ) : (
               <Routes>
                 <Route path="/"            element={<DashboardAdmin dark={d} color={color} empresaId={empresaId} />} />
+                {moduloHabilitado(empresaConfig, 'tienda')      && <Route path="/tienda-admin"  element={<TiendaAdmin empresaId={empresaId} empresaConfig={empresaConfig} dark={d} color={color} />} />}
                 {moduloHabilitado(empresaConfig, 'agenda')     && <Route path="/agenda"      element={<Agenda refreshCitas={refreshCitas} notifCitasAdmin={notifCitasAdmin} setNotifCitasAdmin={setNotifCitasAdmin} empresaId={empresaId} dark={d} color={color} />} />}
                 {moduloHabilitado(empresaConfig, 'servicios')  && <Route path="/servicios"    element={<Servicios empresaId={empresaId} dark={d} color={color} />} />}
                 {moduloHabilitado(empresaConfig, 'pedidos')    && <Route path="/pedidos"      element={<Pedidos refreshPedidos={refreshPedidos} notificacionesAdmin={notificacionesAdmin} setNotificacionesAdmin={setNotificacionesAdmin} empresaId={empresaId} dark={d} color={color} />} />}
