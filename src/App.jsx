@@ -640,8 +640,12 @@ function App() {
   }
 
   // --- MUNDO CLIENTE ---
+  const dCli = esTemaOscuro;
+  const colorSecCli = empresaConfig?.color_secundario || '#0f172a';
+  const bgCliente = dCli ? `color-mix(in srgb, ${colorSecCli} 15%, black)` : `color-mix(in srgb, ${colorSecCli} 3%, white)`;
+
   return (
-    <div style={{ width: '100%', background: esTemaOscuro ? '#0f172a' : '#f9fafb', minHeight: '100vh', fontFamily: 'sans-serif', transition: 'background-color 0.3s' }}>
+    <div style={{ width: '100%', background: bgCliente, minHeight: '100vh', fontFamily: 'sans-serif', transition: 'background-color 0.3s' }}>
       <div style={{ padding: '0' }}>
         {empresaConfig?.estado === 'inactiva' ? (
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '20px' }}>

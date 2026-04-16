@@ -109,28 +109,43 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
   const totalCarrito = carrito.reduce((suma, item) => suma + (item.precio * item.cantidad), 0);
   const totalArticulos = carrito.reduce((suma, item) => suma + item.cantidad, 0);
 
+  const d = esTemaOscuro;
+  const cPrin = empresaConfig?.color_principal || '#3b82f6';
+  const cSec  = empresaConfig?.color_secundario || '#0f172a';
+  const cTer  = empresaConfig?.color_terciario || '#f59e0b';
+
+  const sys = {
+    bg:      d ? `color-mix(in srgb, ${cSec} 15%, black)` : `color-mix(in srgb, ${cSec} 3%, white)`,
+    navBg:   d ? `color-mix(in srgb, ${cSec} 25%, black)` : 'white',
+    cardBg:  d ? `color-mix(in srgb, ${cSec} 25%, black)` : 'white',
+    border:  d ? `color-mix(in srgb, ${cSec} 40%, black)` : `color-mix(in srgb, ${cSec} 15%, white)`,
+    text:    d ? '#f0f4ff' : '#0f172a',
+    sub:     d ? '#94a3b8' : '#475569',
+    hover:   d ? `color-mix(in srgb, ${cSec} 35%, black)` : `color-mix(in srgb, ${cSec} 8%, white)`,
+  };
+
   const estilos = {
-    container: { minHeight: '100vh', color: esTemaOscuro ? '#f8fafc' : '#0f172a', transition: 'color 0.3s', overflowX: 'hidden' },
-    navbar: { background: esTemaOscuro ? '#1e293b' : '#ffffff', padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e5e7eb'}`, position: 'sticky', top: 0, zIndex: 100, transition: 'background-color 0.3s, border-color 0.3s' },
-    navLinks: { color: esTemaOscuro ? '#e2e8f0' : '#4b5563', textDecoration: 'none', fontWeight: '500', transition: 'color 0.2s' },
-    heroSection: { padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, marginBottom: '30px' },
+    container: { minHeight: '100vh', color: sys.text, transition: 'color 0.3s', overflowX: 'hidden' },
+    navbar: { background: sys.navBg, padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sys.border}`, position: 'sticky', top: 0, zIndex: 100, transition: 'background-color 0.3s, border-color 0.3s' },
+    navLinks: { color: sys.text, textDecoration: 'none', fontWeight: '600', transition: 'color 0.2s' },
+    heroSection: { padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', borderBottom: `1px solid ${sys.border}`, marginBottom: '30px' },
     heroTitle: { fontSize: '2.5rem', fontWeight: '800', margin: '0 0 10px 0' },
-    heroSubtitle: { fontSize: '1.1rem', color: esTemaOscuro ? '#94a3b8' : '#64748b', margin: 0 },
-    badge: { position: 'absolute', top: '-8px', right: '-8px', background: empresaConfig?.color_principal || '#ef4444', color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' },
-    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: empresaConfig?.color_principal || '#3b82f6', color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
+    heroSubtitle: { fontSize: '1.1rem', color: sys.sub, margin: 0 },
+    badge: { position: 'absolute', top: '-8px', right: '-8px', background: cTer, color: '#fff', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' },
+    badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: cTer, color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
     grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '30px', padding: '0 20px 60px 20px', maxWidth: '1200px', margin: '0 auto' },
-    card: { background: esTemaOscuro ? '#1e293b' : '#ffffff', borderRadius: '20px', overflow: 'hidden', boxShadow: esTemaOscuro ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)', border: `1px solid ${esTemaOscuro ? '#334155' : '#f1f5f9'}`, display: 'flex', flexDirection: 'column', transition: 'transform 0.2s ease' },
+    card: { background: sys.cardBg, borderRadius: '20px', overflow: 'hidden', boxShadow: d ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)', border: `1px solid ${sys.border}`, display: 'flex', flexDirection: 'column', transition: 'transform 0.2s ease' },
     productImage: { width: '100%', height: '240px', objectFit: 'cover' },
     cardContent: { padding: '24px', display: 'flex', flexDirection: 'column', flex: 1 },
-    productTitle: { margin: '0 0 5px 0', fontSize: '1.25rem', fontWeight: '700' },
-    productDesc: { fontSize: '0.9rem', color: esTemaOscuro ? '#94a3b8' : '#64748b', marginBottom: '15px', lineHeight: '1.5' },
-    productPrice: { fontSize: '1.5rem', fontWeight: '800', color: empresaConfig?.color_principal || '#10b981', margin: '0 0 8px 0' },
-    btnPrimary: { width: '100%', padding: '14px', background: empresaConfig?.color_principal || '#4f46e5', color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', marginTop: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
+    productTitle: { margin: '0 0 5px 0', fontSize: '1.25rem', fontWeight: '700', color: sys.text },
+    productDesc: { fontSize: '0.9rem', color: sys.sub, marginBottom: '15px', lineHeight: '1.5' },
+    productPrice: { fontSize: '1.5rem', fontWeight: '800', color: cPrin, margin: '0 0 8px 0' },
+    btnPrimary: { width: '100%', padding: '14px', background: cPrin, color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: '700', fontSize: '1rem', marginTop: 'auto', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' },
     overlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)', zIndex: 200, opacity: mostrarCarrito ? 1 : 0, visibility: mostrarCarrito ? 'visible' : 'hidden', transition: 'all 0.3s ease-in-out' },
-    drawer: { position: 'fixed', top: 0, right: 0, width: '100%', maxWidth: '420px', height: '100vh', background: esTemaOscuro ? '#0f172a' : '#ffffff', zIndex: 201, transform: mostrarCarrito ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s ease-in-out', boxShadow: '-10px 0 30px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', padding: '30px', boxSizing: 'border-box' },
-    qtySelector: { display: 'flex', alignItems: 'center', background: esTemaOscuro ? '#1e293b' : '#f1f5f9', borderRadius: '8px', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, overflow: 'hidden' },
-    qtyBtn: { background: 'none', border: 'none', padding: '6px 10px', color: esTemaOscuro ? '#f8fafc' : '#475569', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    qtyText: { fontWeight: '700', minWidth: '24px', textAlign: 'center', fontSize: '1rem' }
+    drawer: { position: 'fixed', top: 0, right: 0, width: '100%', maxWidth: '420px', height: '100vh', background: sys.navBg, zIndex: 201, transform: mostrarCarrito ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.3s ease-in-out', boxShadow: '-10px 0 30px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', padding: '30px', boxSizing: 'border-box' },
+    qtySelector: { display: 'flex', alignItems: 'center', background: sys.bg, borderRadius: '8px', border: `1px solid ${sys.border}`, overflow: 'hidden' },
+    qtyBtn: { background: 'none', border: 'none', padding: '6px 10px', color: sys.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    qtyText: { fontWeight: '700', minWidth: '24px', textAlign: 'center', fontSize: '1rem', color: sys.text }
   };
 
   return (
@@ -148,7 +163,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
           {/* Renders Condicionales según el tipo de empresa */}
           {empresaConfig?.usa_inventario && (
             <>
-              <Link to="/" style={{...estilos.navLinks, color: empresaConfig?.color_principal || '#3b82f6', fontWeight: 'bold'}}>Catálogo</Link>
+              <Link to="/" style={{...estilos.navLinks, color: cPrin, fontWeight: 'bold'}}>Catálogo</Link>
               <Link to="/mis-pedidos" style={estilos.navLinks}>Mis Pedidos</Link>
             </>
           )}
@@ -178,13 +193,13 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
               <>
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', zIndex: 998 }} onClick={() => setMostrarNotif(false)}></div>
                 
-                <div style={{ position: 'absolute', top: '35px', right: '-10px', width: '320px', background: esTemaOscuro ? '#1e293b' : 'white', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', border: `1px solid ${esTemaOscuro ? '#334155' : '#e2e8f0'}`, zIndex: 999, overflow: 'hidden' }}>
-                  <div style={{ padding: '15px', fontWeight: 'bold', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#f1f5f9'}`, color: esTemaOscuro ? '#f8fafc' : '#0f172a' }}>
+                <div style={{ position: 'absolute', top: '35px', right: '-10px', width: '320px', background: sys.navBg, borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', border: `1px solid ${sys.border}`, zIndex: 999, overflow: 'hidden' }}>
+                  <div style={{ padding: '15px', fontWeight: 'bold', borderBottom: `1px solid ${sys.border}`, color: sys.text }}>
                     Notificaciones ({Array.isArray(notificaciones) ? notificaciones.length : 0})
                   </div>
                   
                   {!Array.isArray(notificaciones) || notificaciones.length === 0 ? (
-                    <div style={{ padding: '30px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>No hay nada nuevo por aquí.</div>
+                    <div style={{ padding: '30px 20px', textAlign: 'center', color: sys.sub, fontSize: '14px' }}>No hay nada nuevo por aquí.</div>
                   ) : (
                     <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                       {notificaciones.map(n => (
@@ -192,10 +207,10 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
                             navigate(n.ruta); 
                             setNotificaciones(notificaciones.filter(x => x.id !== n.id)); 
                             setMostrarNotif(false); 
-                        }} style={{ padding: '15px', borderBottom: `1px solid ${esTemaOscuro ? '#334155' : '#f1f5f9'}`, cursor: 'pointer', fontSize: '13px', color: esTemaOscuro ? '#cbd5e1' : '#475569', transition: 'background 0.2s' }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = esTemaOscuro ? '#334155' : '#f8fafc'}
+                        }} style={{ padding: '15px', borderBottom: `1px solid ${sys.border}`, cursor: 'pointer', fontSize: '13px', color: sys.text, transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = sys.hover}
                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                            <div style={{ fontWeight: 'bold', color: n.ruta === '/mis-citas' ? '#4f46e5' : '#10b981', marginBottom: '4px' }}>
+                            <div style={{ fontWeight: 'bold', color: n.ruta === '/mis-citas' ? cPrin : cTer, marginBottom: '4px' }}>
                               {n.ruta === '/mis-citas' ? '📅 Actualización de Cita' : '🛍️ Actualización de Pedido'}
                             </div>
                             <div>{n.texto}</div>
@@ -214,7 +229,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
             {totalArticulos > 0 && <span style={estilos.badge}>{totalArticulos}</span>}
           </div>
           
-          <div style={{ borderLeft: `1px solid ${esTemaOscuro ? '#475569' : '#e5e7eb'}`, height: '24px', margin: '0 5px' }}></div>
+          <div style={{ borderLeft: `1px solid ${sys.border}`, height: '24px', margin: '0 5px' }}></div>
           
           {/* --- NUEVO BOTÓN DE PERFIL AQUÍ --- */}
           <Link to="/mi-perfil" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3b82f6', fontSize: '14px', fontWeight: 'bold', textDecoration: 'none' }}>
@@ -233,43 +248,43 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
       <div style={estilos.overlay} onClick={() => setMostrarCarrito(false)}></div>
       <div style={estilos.drawer}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0 }}>Tu Orden</h2>
-          <button onClick={() => setMostrarCarrito(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: esTemaOscuro ? '#f8fafc' : '#0f172a' }}><X size={24} /></button>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, color: sys.text }}>Tu Orden</h2>
+          <button onClick={() => setMostrarCarrito(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: sys.text }}><X size={24} /></button>
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', paddingRight: '10px' }}>
           {carrito.length === 0 ? (
-            <div style={{ textAlign: 'center', marginTop: '80px', color: '#94a3b8' }}>
+            <div style={{ textAlign: 'center', marginTop: '80px', color: sys.sub }}>
               <ShoppingBag size={64} style={{ marginBottom: '16px', opacity: 0.3, margin: '0 auto' }} />
               <p style={{ fontSize: '1.1rem' }}>Tu carrito está vacío.</p>
             </div>
           ) : (
             carrito.map(item => (
-              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: `1px solid ${esTemaOscuro ? '#1e293b' : '#f1f5f9'}` }}>
+              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', borderBottom: `1px solid ${sys.border}` }}>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: '700', margin: '0 0 10px 0', fontSize: '1.1rem' }}>{item.nombre}</p>
+                  <p style={{ fontWeight: '700', margin: '0 0 10px 0', fontSize: '1.1rem', color: sys.text }}>{item.nombre}</p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <div style={estilos.qtySelector}>
                       <button onClick={() => actualizarCantidad(item.id, item.cantidad - 1, item.stock)} style={estilos.qtyBtn}><Minus size={14} /></button>
                       <span style={estilos.qtyText}>{item.cantidad}</span>
                       <button onClick={() => actualizarCantidad(item.id, item.cantidad + 1, item.stock)} style={estilos.qtyBtn}><Plus size={14} /></button>
                     </div>
-                    <p style={{ fontSize: '1rem', margin: 0, color: esTemaOscuro ? '#34d399' : '#10b981', fontWeight: 'bold' }}>${item.precio * item.cantidad}</p>
+                    <p style={{ fontSize: '1rem', margin: 0, color: cPrin, fontWeight: 'bold' }}>${item.precio * item.cantidad}</p>
                   </div>
                 </div>
-                <button onClick={() => quitarDelCarrito(item.id)} style={{ background: esTemaOscuro ? '#334155' : '#fee2e2', color: esTemaOscuro ? '#f8fafc' : '#ef4444', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', fontWeight: '600', marginLeft: '15px' }}>Quitar</button>
+                <button onClick={() => quitarDelCarrito(item.id)} style={{ background: d ? 'rgba(239,68,68,0.1)' : '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: 'pointer', fontWeight: '600', marginLeft: '15px' }}>Quitar</button>
               </div>
             ))
           )}
         </div>
 
         {carrito.length > 0 && (
-          <div style={{ borderTop: `2px solid ${esTemaOscuro ? '#1e293b' : '#f1f5f9'}`, paddingTop: '30px', marginTop: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: '800', marginBottom: '24px' }}>
+          <div style={{ borderTop: `2px solid ${sys.border}`, paddingTop: '30px', marginTop: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.4rem', fontWeight: '800', marginBottom: '24px', color: sys.text }}>
               <span>Total:</span>
-              <span style={{ color: empresaConfig?.color_principal || '#10b981' }}>${totalCarrito}</span>
+              <span style={{ color: cPrin }}>${totalCarrito}</span>
             </div>
-            <button onClick={confirmarPedido} style={{ ...estilos.btnPrimary, background: empresaConfig?.color_principal || '#10b981', padding: '16px', fontSize: '1.1rem' }}>Confirmar Pedido</button>
+            <button onClick={confirmarPedido} style={{ ...estilos.btnPrimary, background: cPrin, padding: '16px', fontSize: '1.1rem' }}>Confirmar Pedido</button>
           </div>
         )}
       </div>
