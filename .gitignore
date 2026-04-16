@@ -8,3 +8,4 @@ node_modules/
 # Archivos de construcción de Vite
 dist/
 dist-ssr/
+.vercel
