@@ -193,7 +193,9 @@ function GestionEmpresas({ dark = false }) {
   const [email, setEmail] = useState('');
   const [plan, setPlan] = useState('pro');
   const [modulos, setModulos] = useState(getModulosPorDefecto('pro'));
-  const [color, setColor] = useState('#3b82f6');
+  const [colorPrin, setColorPrin] = useState('#3b82f6');
+  const [colorSec, setColorSec] = useState('#0f172a');
+  const [colorTer, setColorTer] = useState('#f59e0b');
   const [logoFile, setLogoFile] = useState(null);
   const [horaAp, setHoraAp] = useState('09:00');
   const [horaCi, setHoraCi] = useState('18:00');
@@ -204,6 +206,9 @@ function GestionEmpresas({ dark = false }) {
   const [editEmp, setEditEmp] = useState(null);
   const [editMods, setEditMods] = useState({});
   const [editPlan, setEditPlan] = useState('pro');
+  const [editColorPrin, setEditColorPrin] = useState('#3b82f6');
+  const [editColorSec, setEditColorSec] = useState('#0f172a');
+  const [editColorTer, setEditColorTer] = useState('#f59e0b');
   const [guardando, setGuardando] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -282,7 +287,7 @@ useEffect(() => { cargar(); }, [cargar]);
         });
       }
       setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro')); 
-      setColorPrin('#3b82f6'); setColorSec('#0f172a'); setColorTer('#f59e0b'); 
+      setColorPrin('#3b82f6'); setColorSec('#0f172a'); setColorTer('#f59e0b');
       setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setPaso(1);
       cargar();
     } catch (err) { Swal.fire('Error', err.message, 'error'); }
