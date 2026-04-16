@@ -71,8 +71,8 @@ function Sidebar({ notificacionesAdmin, manejarClickPedidos, notifCitasAdmin, ma
   const colorTer = empresaConfig?.color_terciario || '#f59e0b';
 
   const sideBg = dark
-    ? `linear-gradient(180deg, color-mix(in srgb, ${colorSec} 25%, black) 0%, color-mix(in srgb, ${colorSec} 5%, black) 100%)`
-    : `linear-gradient(180deg, color-mix(in srgb, ${colorSec} 95%, black) 0%, color-mix(in srgb, ${colorSec} 75%, black) 100%)`;
+    ? `linear-gradient(180deg, color-mix(in srgb, ${colorSec} 15%, black) 0%, color-mix(in srgb, ${colorSec} 5%, black) 100%)`
+    : `linear-gradient(180deg, color-mix(in srgb, ${colorSec} 20%, #0f172a) 0%, color-mix(in srgb, ${colorSec} 5%, #020617) 100%)`;
 
   return (
     <div

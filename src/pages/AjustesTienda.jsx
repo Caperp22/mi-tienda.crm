@@ -6,6 +6,8 @@ import { MODULOS_DISPONIBLES, INFO_PLANES, MODULOS_POR_PLAN } from '../config/mo
 
 function AjustesTienda({ empresaId }) {
   const [colorPrincipal, setColorPrincipal] = useState('#3b82f6');
+  const [colorSecundario, setColorSecundario] = useState('#0f172a');
+  const [colorTerciario, setColorTerciario] = useState('#f59e0b');
   const [logoUrl, setLogoUrl] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
   const [horaApertura, setHoraApertura] = useState('09:00');
@@ -24,11 +26,13 @@ function AjustesTienda({ empresaId }) {
     async function cargarConfig() {
       const { data } = await supabase
         .from('empresas')
-        .select('color_principal, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, modulos')
+        .select('color_principal, color_secundario, color_terciario, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, modulos')
         .eq('id', empresaId)
         .single();
       if (data) {
         setColorPrincipal(data.color_principal || '#3b82f6');
+        setColorSecundario(data.color_secundario || '#0f172a');
+        setColorTerciario(data.color_terciario || '#f59e0b');
         setLogoUrl(data.logo_url);
         setHoraApertura(data.hora_apertura?.substring(0, 5) || '09:00');
         setHoraCierre(data.hora_cierre?.substring(0, 5) || '18:00');
@@ -67,7 +71,7 @@ function AjustesTienda({ empresaId }) {
 
       const { error } = await supabase
         .from('empresas')
-        .update({ color_principal: colorPrincipal, logo_url: nuevaUrl, hora_apertura: horaApertura, hora_cierre: horaCierre, intervalo_citas: intervaloCitas })
+        .update({ color_principal: colorPrincipal, color_secundario: colorSecundario, color_terciario: colorTerciario, logo_url: nuevaUrl, hora_apertura: horaApertura, hora_cierre: horaCierre, intervalo_citas: intervaloCitas })
         .eq('id', empresaId);
 
       if (error) throw error;
@@ -220,10 +224,20 @@ function AjustesTienda({ empresaId }) {
         </h2>
         <form onSubmit={guardarAjustes}>
           <div style={estilos.inputGroup}>
-            <label style={estilos.label}><Palette size={15} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Color Principal de la Marca</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <input type="color" value={colorPrincipal} onChange={e => setColorPrincipal(e.target.value)} style={{ border: 'none', width: '60px', height: '50px', cursor: 'pointer', background: 'none', padding: 0 }} />
-              <span style={{ fontFamily: 'monospace', color: '#64748b', background: '#f1f5f9', padding: '5px 10px', borderRadius: '6px', fontWeight: 'bold', letterSpacing: '1px' }}>{colorPrincipal.toUpperCase()}</span>
+            <label style={estilos.label}><Palette size={15} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Colores de la Marca</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '15px' }}>
+              <div>
+                <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '5px' }}>Principal (Botones/Acentos)</span>
+                <input type="color" value={colorPrincipal} onChange={e => setColorPrincipal(e.target.value)} style={{ width: '100%', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }} />
+              </div>
+              <div>
+                <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '5px' }}>Secundario (Fondos/Sidebar)</span>
+                <input type="color" value={colorSecundario} onChange={e => setColorSecundario(e.target.value)} style={{ width: '100%', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }} />
+              </div>
+              <div>
+                <span style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '5px' }}>Terciario (Alertas/Destacados)</span>
+                <input type="color" value={colorTerciario} onChange={e => setColorTerciario(e.target.value)} style={{ width: '100%', height: '40px', border: 'none', borderRadius: '6px', cursor: 'pointer', padding: 0 }} />
+              </div>
             </div>
           </div>
 

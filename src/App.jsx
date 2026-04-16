@@ -557,8 +557,8 @@ function App() {
       page:    d ? `color-mix(in srgb, ${colorSec} 15%, black)` : `color-mix(in srgb, ${colorSec} 3%, white)`,
       topbar:  d ? `color-mix(in srgb, ${colorSec} 25%, black)` : 'white',
       border:  d ? `color-mix(in srgb, ${colorSec} 40%, black)` : `color-mix(in srgb, ${colorSec} 15%, white)`,
-      text:    d ? '#f0f4ff' : `color-mix(in srgb, ${colorSec} 90%, black)`,
-      sub:     d ? '#94a3b8' : `color-mix(in srgb, ${colorSec} 60%, black)`,
+      text:    d ? '#f0f4ff' : '#0f172a',
+      sub:     d ? '#94a3b8' : '#475569',
       content: d ? `color-mix(in srgb, ${colorSec} 15%, black)` : `color-mix(in srgb, ${colorSec} 3%, white)`,
     };
     return (

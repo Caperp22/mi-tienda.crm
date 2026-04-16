@@ -15,8 +15,8 @@ export default function DashboardAdmin({ empresaId, dark = false, color = '#3b82
   const t = {
     bg:     dark ? `color-mix(in srgb, ${colorSec} 25%, black)` : 'white',
     border: dark ? `color-mix(in srgb, ${colorSec} 40%, black)` : `color-mix(in srgb, ${colorSec} 15%, white)`,
-    text:   dark ? '#f0f4ff' : `color-mix(in srgb, ${colorSec} 90%, black)`,
-    sub:    dark ? '#94a3b8' : `color-mix(in srgb, ${colorSec} 60%, black)`,
+    text:   dark ? '#f0f4ff' : '#0f172a',
+    sub:    dark ? '#94a3b8' : '#475569',
   };
 
   useEffect(() => {
