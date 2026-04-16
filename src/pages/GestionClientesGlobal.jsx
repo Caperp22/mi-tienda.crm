@@ -58,7 +58,7 @@ function GestionClientesGlobal() {
                   <tr key={cliente.id} style={{ transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={estilos.td}>
                       <span style={{ fontWeight: '600', display: 'block' }}>{cliente.nombre}</span>
-                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>ID: {cliente.id.substring(0,8)}...</span>
+                      <span style={{ fontSize: '11px', color: '#94a3b8' }}>ID: {String(cliente.id).substring(0,8)}...</span>
                     </td>
                     <td style={estilos.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Mail size={14} color="#94a3b8" /> {cliente.correo}</div>

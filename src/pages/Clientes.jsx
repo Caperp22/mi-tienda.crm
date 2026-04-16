@@ -71,7 +71,7 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
   );
 
   const avatar = nombre => (nombre || '?').charAt(0).toUpperCase();
-  const date   = s => new Date(s).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+  const date   = s => s ? new Date(s).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 
   return (
     <div style={{ maxWidth: '1000px' }}>
