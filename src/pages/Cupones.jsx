@@ -108,7 +108,7 @@ function Cupones({ empresaId, dark = false, color = '#3b82f6' }) {
   const fmtDesc = c => c.tipo === 'porcentaje' ? `${c.valor}%` : `$${Number(c.valor).toLocaleString('es-CO')}`;
   const vencido = c => c.vence_en && new Date(c.vence_en) < new Date();
 
-  const FormCupon = ({ data, setData, onSubmit, btnLabel }) => (
+  const renderFormCupon = (data, setData, onSubmit, btnLabel) => (
     <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '8px', alignItems: 'end' }}>
         <div>
@@ -184,7 +184,7 @@ function Cupones({ empresaId, dark = false, color = '#3b82f6' }) {
       {/* Formulario nuevo */}
       <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: '14px', padding: '20px', marginBottom: '20px', boxShadow: dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
         <h2 style={{ margin: '0 0 14px', fontSize: '14px', fontWeight: '700', color: t.text }}>Crear cupón</h2>
-        <FormCupon data={nuevo} setData={setNuevo} onSubmit={guardar} btnLabel="Crear cupón" />
+        {renderFormCupon(nuevo, setNuevo, guardar, "Crear cupón")}
       </div>
 
       {/* Lista */}
@@ -256,7 +256,7 @@ function Cupones({ empresaId, dark = false, color = '#3b82f6' }) {
               <h2 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: t.text }}>Editar cupón</h2>
               <button onClick={() => setEditando(null)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.sub }}><X size={14} /></button>
             </div>
-            <FormCupon data={editando} setData={setEditando} onSubmit={guardarEdicion} btnLabel="Guardar cambios" />
+            {renderFormCupon(editando, setEditando, guardarEdicion, "Guardar cambios")}
           </div>
         </div>
       )}

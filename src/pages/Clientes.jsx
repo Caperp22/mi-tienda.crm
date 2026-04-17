@@ -175,6 +175,7 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
             ))}
           </tbody>
         </table>
+        </div>
 
         {filtrados.length === 0 && !cargando && (
           <div style={{ padding: '40px', textAlign: 'center', color: t.sub }}>
