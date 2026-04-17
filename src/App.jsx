@@ -113,7 +113,7 @@ function useAuth() {
       }
 
       if (currentEmpresaId) {
-        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, color_secundario, color_terciario, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, slug, estado').eq('id', currentEmpresaId).maybeSingle();
+        const { data: empData } = await supabase.from('empresas').select('nombre, modulos, usa_inventario, usa_citas, color_principal, color_secundario, color_terciario, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, slug, estado, suscripcion_vence, suscripcion_tipo, pago_pendiente').eq('id', currentEmpresaId).maybeSingle();
         if (empData) {
           setEmpresaNombre(empData.nombre);
           // Guardamos la configuración visual y de módulos
@@ -274,7 +274,7 @@ function App() {
             if (e.suscripcion_vence) {
               const v = new Date(e.suscripcion_vence); v.setHours(0, 0, 0, 0);
               const dias = Math.round((v - hoy) / 86400000);
-              return dias <= 4;
+              return dias <= 15;
             }
             return false;
           }).map(e => {
@@ -331,7 +331,7 @@ function App() {
           <nav style={{ flex: 1, padding: '14px 0', overflowY: 'auto' }}>
             {[
               { grupo: 'Principal',   items: [
-                { id: 'dashboard',   icono: <LayoutDashboard size={15} />, label: 'Dashboard' },
+                { id: 'dashboard',   icono: <LayoutDashboard size={15} />, label: 'Dashboard', badge: alertasSusc.length },
                 { id: 'empresas',    icono: <Building2 size={15} />,       label: 'Empresas' },
               ]},
               { grupo: 'Usuarios',   items: [
@@ -386,6 +386,17 @@ function App() {
               <span style={{ fontSize: '12px', color: sa.sub }}>Sistema operativo</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* ── Alerta persistente de suscripciones ── */}
+              {alertasSusc.length > 0 && (
+                <button
+                  onClick={() => setVistaSuperAdmin('dashboard')}
+                  title={`${alertasSusc.length} empresa(s) con suscripción por vencer o pago pendiente`}
+                  style={{ position: 'relative', background: alertasSusc.some(a => a.diasRestantes !== null && a.diasRestantes < 0 || a.pago_pendiente) ? '#fef2f2' : '#fffbeb', color: alertasSusc.some(a => a.diasRestantes !== null && a.diasRestantes < 0 || a.pago_pendiente) ? '#ef4444' : '#d97706', border: `1px solid ${alertasSusc.some(a => (a.diasRestantes !== null && a.diasRestantes < 0) || a.pago_pendiente) ? '#fecaca' : '#fde68a'}`, borderRadius: '9px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', animation: 'pulse-alert 2s infinite' }}>
+                  <Bell size={13} />
+                  {alertasSusc.length} alerta{alertasSusc.length > 1 ? 's' : ''} de suscripción
+                  <span style={{ position: 'absolute', top: '-4px', right: '-4px', width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', border: '2px solid white' }} />
+                </button>
+              )}
               {notifUpgrades > 0 && (
                 <button onClick={() => { setVistaSuperAdmin('solicitudes'); setNotifUpgrades(0); }}
                   style={{ background: '#fef3c7', color: '#d97706', border: '1px solid #fde68a', borderRadius: '8px', padding: '5px 12px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -600,6 +611,22 @@ function App() {
               <span style={{ fontSize: '12px', color: adm.sub, background: d ? 'rgba(255,255,255,0.06)' : '#f1f5f9', padding: '2px 8px', borderRadius: '4px' }}>
                 {new Date().toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })}
               </span>
+              {empresaConfig?.plan && (
+                <span style={{ fontSize: '11px', fontWeight: '800', color: color, background: `${color}20`, padding: '2px 8px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                  PLAN {empresaConfig.plan}
+                </span>
+              )}
+              {empresaConfig?.suscripcion_vence && (() => {
+                const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+                const dRestantes = Math.round((new Date(empresaConfig.suscripcion_vence) - hoy) / 86400000);
+                const colorAlerta = dRestantes < 0 ? '#ef4444' : dRestantes <= 15 ? '#f59e0b' : adm.sub;
+                const bgAlerta = dRestantes < 0 ? '#ef444420' : dRestantes <= 15 ? '#f59e0b20' : (d ? 'rgba(255,255,255,0.06)' : '#f1f5f9');
+                return (
+                  <span style={{ fontSize: '11px', fontWeight: '700', color: colorAlerta, background: bgAlerta, padding: '2px 8px', borderRadius: '4px' }}>
+                    {dRestantes < 0 ? `Vencido hace ${Math.abs(dRestantes)}d` : dRestantes === 0 ? 'Vence hoy' : `Vence en ${dRestantes}d`}
+                  </span>
+                );
+              })()}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <span style={{ fontSize: '12px', color: adm.sub }}>{usuario.email}</span>
@@ -613,6 +640,42 @@ function App() {
               </button>
             </div>
           </div>
+
+          {/* ── Banner de suscripción (siempre visible si aplica) ── */}
+          {(() => {
+            const vence = empresaConfig?.suscripcion_vence;
+            const pagoPend = empresaConfig?.pago_pendiente;
+            if (!vence && !pagoPend) return null;
+            const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+            const dias = vence ? Math.round((new Date(vence) - hoy) / 86400000) : null;
+            const expired = dias !== null && dias < 0;
+            const urgente = expired || pagoPend;
+            const cerca = dias !== null && dias >= 0 && dias <= 15;
+            if (!urgente && !cerca) return null;
+            const bg     = urgente ? (d ? 'rgba(239,68,68,0.12)' : '#fef2f2')   : (d ? 'rgba(251,191,36,0.1)' : '#fffbeb');
+            const border = urgente ? (d ? 'rgba(239,68,68,0.3)' : '#fecaca')    : (d ? 'rgba(251,191,36,0.3)' : '#fde68a');
+            const txt    = urgente ? '#ef4444' : '#d97706';
+            return (
+              <div style={{ background: bg, borderBottom: `1px solid ${border}`, padding: '8px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AlertTriangle size={15} color={txt} style={{ flexShrink: 0 }} />
+                  <span style={{ fontSize: '12px', fontWeight: '700', color: txt }}>
+                    {expired
+                      ? `Tu suscripción venció hace ${Math.abs(dias)} día(s). Contacta a soporte para renovar.`
+                      : dias === 0
+                        ? 'Tu suscripción vence hoy. Contacta a soporte para renovar.'
+                        : pagoPend && dias === null
+                          ? 'Tienes un pago pendiente. Confirma el pago con tu proveedor para continuar sin interrupciones.'
+                          : `Tu suscripción vence en ${dias} día(s) — ${vence}. Renueva a tiempo para no perder el acceso.`}
+                    {pagoPend && !expired && <span style={{ marginLeft: '10px', background: `${txt}20`, border: `1px solid ${txt}40`, borderRadius: '4px', padding: '1px 7px', fontSize: '10px' }}>PAGO PENDIENTE</span>}
+                  </span>
+                </div>
+                <span style={{ fontSize: '11px', color: txt, opacity: 0.8, flexShrink: 0 }}>
+                  Contáctanos para renovar tu plan {empresaConfig?.suscripcion_tipo === 'anual' ? 'anual' : 'mensual'}.
+                </span>
+              </div>
+            );
+          })()}
 
           {/* ── Contenido ── */}
           <div className="admin-content" style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '28px 32px' }}>

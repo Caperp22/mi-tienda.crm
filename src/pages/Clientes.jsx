@@ -34,13 +34,9 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
 
   /* ─── Datos ─────────────────────────────────────────────── */
   const obtener = useCallback(async () => {
-    setCargando(true);
-    const { data, error } = await supabase
-      .from('clientes')
-      .select('*')
-      .eq('empresa_id', empresaId)
-      .order('nombre', { ascending: true });
-    if (error) { setCargando(false); return; }
+    const query = supabase.from('clientes').select('*').order('nombre', { ascending: true });
+    if (empresaId) query.eq('empresa_id', empresaId);
+    const { data } = await query;
     setClientes(data || []);
     setCargando(false);
   }, [empresaId]);

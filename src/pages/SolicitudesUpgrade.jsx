@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
 import { TrendingUp, Phone, CheckCircle, XCircle, Clock, Save, Building } from 'lucide-react';
@@ -20,22 +20,25 @@ function SolicitudesUpgrade({ dark = false }) {
     inputB:  dark ? 'rgba(255,255,255,0.12)' : '#e2e8f0',
   };
 
-  async function cargarDatos() {
-    setCargando(true);
+  const cargarDatos = useCallback(async () => {
+    // Cargar teléfono del Super Admin
     const { data: sysConf } = await supabase.from('sistema_config').select('telefono_whatsapp').eq('id', 1).maybeSingle();
     if (sysConf) setTelefonoAdmin(sysConf.telefono_whatsapp || '');
 
+    // Cargar solicitudes con datos de la empresa
     const { data: sols } = await supabase
       .from('solicitudes_upgrade')
       .select('*, empresas(nombre, telefono, email_admin)')
       .order('created_at', { ascending: false });
+      
     setSolicitudes(sols || []);
     setCargando(false);
-  }
+  }, []);
 
   useEffect(() => {
-    cargarDatos(); // eslint-disable-line react-hooks/set-state-in-effect
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    cargarDatos();
+  }, [cargarDatos]);
 
   async function guardarTelefono() {
     setGuardandoTel(true);
@@ -58,9 +61,10 @@ function SolicitudesUpgrade({ dark = false }) {
 
     if (!isConfirmed) return;
 
+    // 1. Actualizar empresa: plan y modulos
     const nuevosModulos = getModulosPorDefecto(plan);
     const { error: errEmp } = await supabase.from('empresas').update({
-      plan,
+      plan: plan,
       modulos: nuevosModulos,
       usa_inventario: nuevosModulos.inventario || false,
       usa_citas: nuevosModulos.agenda || false
