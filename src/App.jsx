@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon, Sun, Moon, Power, Store } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, LogOut, DollarSign, Activity, Crown, TrendingUp, Check, X as XIcon, Sun, Moon, Power, Store, AlertTriangle, RefreshCw, CreditCard, Bell } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 
@@ -164,6 +164,7 @@ function App() {
   const [totalAdmins, setTotalAdmins] = useState(0);
   const [totalClientes, setTotalClientes] = useState(0);
   const [metricasPlanes, setMetricasPlanes] = useState({ basico: 0, pro: 0, advance: 0 });
+  const [alertasSusc, setAlertasSusc] = useState([]);
 
   const manejarClickPedidos = () => { setNotificacionesAdmin(0); setRefreshPedidos(prev => prev + 1); };
   const manejarClickCitas = () => { setNotifCitasAdmin(0); setRefreshCitas(prev => prev + 1); };
@@ -259,7 +260,7 @@ function App() {
           setIngresosGlobales(sumaTotal);
         }
 
-        const { data: dataEmp } = await supabase.from('empresas').select('plan');
+        const { data: dataEmp } = await supabase.from('empresas').select('id, nombre, plan, suscripcion_tipo, suscripcion_vence, pago_pendiente');
         if (dataEmp) {
           setTotalEmpresas(dataEmp.length);
           setMetricasPlanes({
@@ -267,6 +268,22 @@ function App() {
             pro: dataEmp.filter(e => e.plan === 'pro').length,
             advance: dataEmp.filter(e => e.plan === 'advance').length
           });
+          const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+          const alertas = dataEmp.filter(e => {
+            if (e.pago_pendiente) return true;
+            if (e.suscripcion_vence) {
+              const v = new Date(e.suscripcion_vence); v.setHours(0, 0, 0, 0);
+              const dias = Math.round((v - hoy) / 86400000);
+              return dias <= 4;
+            }
+            return false;
+          }).map(e => {
+            const dias = e.suscripcion_vence
+              ? Math.round((new Date(e.suscripcion_vence).setHours(0,0,0,0), new Date(e.suscripcion_vence) - hoy) / 86400000)
+              : null;
+            return { ...e, diasRestantes: dias };
+          });
+          setAlertasSusc(alertas);
         }
 
         const { count: countAdm } = await supabase.from('administradores').select('*', { count: 'exact', head: true }).eq('rol', 'admin');
@@ -395,6 +412,88 @@ function App() {
                   <span style={{ fontSize: '12px', color: sa.sub }}>Visión global de tu plataforma SaaS</span>
                 </div>
 
+                {/* ── Panel de alertas de suscripción ─────────────────── */}
+                {alertasSusc.length > 0 && (
+                  <div style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                      <Bell size={14} color="#f59e0b" />
+                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                        Alertas de suscripción ({alertasSusc.length})
+                      </span>
+                    </div>
+                    {alertasSusc.map(emp => {
+                      const vencida = emp.diasRestantes !== null && emp.diasRestantes < 0;
+                      const hoy2 = emp.diasRestantes === 0;
+                      const urgente = vencida || hoy2 || emp.pago_pendiente;
+                      const colorBg   = urgente ? (d ? 'rgba(239,68,68,0.08)' : '#fef2f2')   : (d ? 'rgba(251,191,36,0.08)' : '#fffbeb');
+                      const colorBord = urgente ? (d ? 'rgba(239,68,68,0.25)' : '#fecaca')   : (d ? 'rgba(251,191,36,0.25)' : '#fde68a');
+                      const colorText = urgente ? '#f87171' : '#fbbf24';
+                      return (
+                        <div key={emp.id} style={{ background: colorBg, border: `1px solid ${colorBord}`, borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                            <AlertTriangle size={16} color={colorText} style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <span style={{ fontWeight: '700', fontSize: '13px', color: sa.text }}>{emp.nombre}</span>
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '3px' }}>
+                                {emp.pago_pendiente && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: '#f59e0b20', color: '#f59e0b', border: '1px solid #f59e0b40', padding: '1px 7px', borderRadius: '4px', fontSize: '10px', fontWeight: '700' }}>
+                                    <CreditCard size={9} /> PAGO PENDIENTE
+                                  </span>
+                                )}
+                                {emp.diasRestantes !== null && (
+                                  <span style={{ fontSize: '11px', color: colorText, fontWeight: '600' }}>
+                                    {vencida
+                                      ? `Suscripción vencida hace ${Math.abs(emp.diasRestantes)} día(s)`
+                                      : hoy2
+                                        ? 'Vence hoy'
+                                        : `Vence en ${emp.diasRestantes} día(s)`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                            <button
+                              onClick={async () => {
+                                const tipo = emp.suscripcion_tipo || 'mensual';
+                                const dias = tipo === 'anual' ? 365 : 30;
+                                const base = emp.suscripcion_vence && new Date(emp.suscripcion_vence) > new Date() ? new Date(emp.suscripcion_vence) : new Date();
+                                base.setDate(base.getDate() + dias);
+                                const nuevaFecha = base.toISOString().split('T')[0];
+                                const { error } = await supabase.from('empresas').update({ suscripcion_vence: nuevaFecha, pago_pendiente: false }).eq('id', emp.id);
+                                if (error) return Swal.fire('Error', error.message, 'error');
+                                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `${emp.nombre} renovada hasta ${nuevaFecha}`, showConfirmButton: false, timer: 2500 });
+                                setAlertasSusc(prev => prev.filter(a => a.id !== emp.id));
+                              }}
+                              style={{ padding: '5px 12px', background: '#10b98118', color: '#10b981', border: '1px solid #10b98130', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <RefreshCw size={11} /> Renovar
+                            </button>
+                            {emp.pago_pendiente && (
+                              <button
+                                onClick={async () => {
+                                  const { isConfirmed } = await Swal.fire({ title: '¿Confirmar pago?', text: `Marcar pago recibido de ${emp.nombre} y renovar suscripción.`, icon: 'question', showCancelButton: true, confirmButtonColor: '#10b981', confirmButtonText: 'Confirmar', cancelButtonText: 'Cancelar' });
+                                  if (!isConfirmed) return;
+                                  const tipo = emp.suscripcion_tipo || 'mensual';
+                                  const dias = tipo === 'anual' ? 365 : 30;
+                                  const base = emp.suscripcion_vence && new Date(emp.suscripcion_vence) > new Date() ? new Date(emp.suscripcion_vence) : new Date();
+                                  base.setDate(base.getDate() + dias);
+                                  const nuevaFecha = base.toISOString().split('T')[0];
+                                  const { error } = await supabase.from('empresas').update({ suscripcion_vence: nuevaFecha, pago_pendiente: false }).eq('id', emp.id);
+                                  if (error) return Swal.fire('Error', error.message, 'error');
+                                  Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Pago confirmado — ${emp.nombre} renovada`, showConfirmButton: false, timer: 2500 });
+                                  setAlertasSusc(prev => prev.filter(a => a.id !== emp.id));
+                                }}
+                                style={{ padding: '5px 12px', background: '#f59e0b18', color: '#f59e0b', border: '1px solid #f59e0b30', borderRadius: '6px', cursor: 'pointer', fontSize: '11px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <CreditCard size={11} /> Confirmar pago
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
                 {/* Fila superior: 4 KPIs + 3 planes en la misma fila */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr) repeat(3,auto)', gap: '10px', marginBottom: '12px' }}>
                   {[
@@ -464,7 +563,6 @@ function App() {
     const d = esTemaOscuro;
     const color    = empresaConfig?.color_principal || '#3b82f6';
     const colorSec = empresaConfig?.color_secundario || '#0f172a';
-    const colorTer = empresaConfig?.color_terciario || '#f59e0b';
     
     const adm = {
       page:    d ? `color-mix(in srgb, ${colorSec} 15%, black)` : `color-mix(in srgb, ${colorSec} 3%, white)`,
