@@ -9,6 +9,9 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
   const [productoEditando, setProductoEditando] = useState(null);
   const [busqueda,         setBusqueda]         = useState('');
   const [nuevo, setNuevo] = useState({ nombre: '', precio: '', stock: '', imagen: '', descripcion: '' });
+  const [fileNuevo, setFileNuevo] = useState(null);
+  const [fileEdicion, setFileEdicion] = useState(null);
+  const [guardando, setGuardando] = useState(false);
 
   /* ─── Tema ──────────────────────────────────────────────── */
   const t = {
@@ -49,22 +52,61 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
     e.preventDefault();
     if (!nuevo.nombre || !nuevo.precio || !nuevo.stock)
       return Swal.fire('Campos requeridos', 'Nombre, precio y stock son obligatorios', 'warning');
-    const { error } = await supabase.from('productos').insert([{ ...nuevo, empresa_id: empresaId }]);
-    if (error) return Swal.fire('Error', error.message, 'error');
-    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Producto agregado', showConfirmButton: false, timer: 1500 });
-    setNuevo({ nombre: '', precio: '', stock: '', imagen: '', descripcion: '' });
-    obtener();
+      
+    setGuardando(true);
+    try {
+      let imageUrl = nuevo.imagen;
+      if (fileNuevo) {
+        const fileExt = fileNuevo.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('productos').upload(fileName, fileNuevo);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('productos').getPublicUrl(fileName);
+        imageUrl = publicUrl;
+      }
+
+      const { error } = await supabase.from('productos').insert([{ ...nuevo, imagen: imageUrl, empresa_id: empresaId }]);
+      if (error) throw error;
+
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Producto agregado', showConfirmButton: false, timer: 1500 });
+      setNuevo({ nombre: '', precio: '', stock: '', imagen: '', descripcion: '' });
+      setFileNuevo(null);
+      obtener();
+    } catch (err) {
+      Swal.fire('Error', err.message, 'error');
+    } finally {
+      setGuardando(false);
+    }
   }
 
   async function guardarEdicion(e) {
     e.preventDefault();
-    const { error } = await supabase.from('productos')
-      .update({ nombre: productoEditando.nombre, precio: productoEditando.precio, stock: productoEditando.stock, imagen: productoEditando.imagen, descripcion: productoEditando.descripcion })
-      .eq('id', productoEditando.id);
-    if (error) return Swal.fire('Error', error.message, 'error');
-    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Producto actualizado', showConfirmButton: false, timer: 1500 });
-    setProductoEditando(null);
-    obtener();
+    setGuardando(true);
+    try {
+      let imageUrl = productoEditando.imagen;
+      if (fileEdicion) {
+        const fileExt = fileEdicion.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('productos').upload(fileName, fileEdicion);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('productos').getPublicUrl(fileName);
+        imageUrl = publicUrl;
+      }
+
+      const { error } = await supabase.from('productos')
+        .update({ nombre: productoEditando.nombre, precio: productoEditando.precio, stock: productoEditando.stock, imagen: imageUrl, descripcion: productoEditando.descripcion })
+        .eq('id', productoEditando.id);
+        
+      if (error) throw error;
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Producto actualizado', showConfirmButton: false, timer: 1500 });
+      setProductoEditando(null);
+      setFileEdicion(null);
+      obtener();
+    } catch (err) {
+      Swal.fire('Error', err.message, 'error');
+    } finally {
+      setGuardando(false);
+    }
   }
 
   async function eliminar(id) {
@@ -101,23 +143,31 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
             </div>
             <input style={inp} type="number" placeholder="Precio ($)" value={nuevo.precio} onChange={e => setNuevo({ ...nuevo, precio: e.target.value })} />
             <input style={inp} type="number" placeholder="Stock (uds.)" value={nuevo.stock} onChange={e => setNuevo({ ...nuevo, stock: e.target.value })} />
-            <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
-              <ImageIcon size={15} style={{ position: 'absolute', left: '12px', top: '11px', color: t.sub }} />
-              <input style={{ ...inp, paddingLeft: '34px' }} placeholder="URL de imagen (https://...)" value={nuevo.imagen} onChange={e => setNuevo({ ...nuevo, imagen: e.target.value })} />
+            <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ position: 'relative' }}>
+                <ImageIcon size={15} style={{ position: 'absolute', left: '12px', top: '11px', color: t.sub }} />
+                <input style={{ ...inp, paddingLeft: '34px' }} placeholder="URL de imagen (https://...)" value={nuevo.imagen} onChange={e => { setNuevo({ ...nuevo, imagen: e.target.value }); setFileNuevo(null); }} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ height: '1px', flex: 1, background: t.border }} />
+                <span style={{ fontSize: '10px', color: t.sub, fontWeight: 'bold' }}>O SUBIR ARCHIVO</span>
+                <div style={{ height: '1px', flex: 1, background: t.border }} />
+              </div>
+              <input key={fileNuevo ? 'file-yes' : 'file-no'} type="file" accept="image/*" onChange={e => { setFileNuevo(e.target.files[0]); setNuevo({ ...nuevo, imagen: '' }); }} style={{ ...inp, padding: '7px 12px', background: t.card }} />
             </div>
             <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
               <AlignLeft size={15} style={{ position: 'absolute', left: '12px', top: '11px', color: t.sub }} />
               <textarea style={{ ...inp, paddingLeft: '34px', minHeight: '70px', resize: 'vertical' }} placeholder="Descripción..." value={nuevo.descripcion} onChange={e => setNuevo({ ...nuevo, descripcion: e.target.value })} />
             </div>
           </div>
-          <button type="submit" style={{
+          <button type="submit" disabled={guardando} style={{
             marginTop: '14px', padding: '11px 20px', border: 'none', borderRadius: '9px',
-            background: `linear-gradient(135deg, ${color}, ${color}cc)`,
-            color: 'white', fontWeight: '700', fontSize: '13px', cursor: 'pointer',
+            background: guardando ? '#64748b' : `linear-gradient(135deg, ${color}, ${color}cc)`,
+            color: 'white', fontWeight: '700', fontSize: '13px', cursor: guardando ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', gap: '7px',
-            boxShadow: `0 4px 12px ${color}33`,
+            boxShadow: guardando ? 'none' : `0 4px 12px ${color}33`,
           }}>
-            <Plus size={16} /> Guardar producto
+            <Plus size={16} /> {guardando ? 'Guardando...' : 'Guardar producto'}
           </button>
         </form>
       </div>
@@ -202,12 +252,12 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
       {/* ── Modal edición ──────────────────────────────── */}
       {productoEditando && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,13,26,0.7)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
-          onClick={() => setProductoEditando(null)}>
+          onClick={() => { setProductoEditando(null); setFileEdicion(null); }}>
           <div style={{ background: dark ? '#0d1526' : 'white', border: `1px solid ${t.border}`, borderRadius: '16px', width: '100%', maxWidth: '480px', padding: '28px', position: 'relative', maxHeight: '90vh', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 style={{ margin: 0, fontSize: '17px', fontWeight: '800', color: t.text }}>Editar Producto</h2>
-              <button onClick={() => setProductoEditando(null)} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.sub }}>
+              <button onClick={() => { setProductoEditando(null); setFileEdicion(null); }} style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: '7px', width: '28px', height: '28px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.sub }}>
                 <X size={14} />
               </button>
             </div>
@@ -227,15 +277,23 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>URL de Imagen</label>
-                <input style={inp} value={productoEditando.imagen || ''} onChange={e => setProductoEditando({ ...productoEditando, imagen: e.target.value })} />
+                <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Imagen del Producto (URL o Subir nueva)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input style={inp} placeholder="URL de imagen (https://...)" value={productoEditando.imagen || ''} onChange={e => { setProductoEditando({ ...productoEditando, imagen: e.target.value }); setFileEdicion(null); }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ height: '1px', flex: 1, background: t.border }} />
+                    <span style={{ fontSize: '10px', color: t.sub, fontWeight: 'bold' }}>O SUBIR ARCHIVO</span>
+                    <div style={{ height: '1px', flex: 1, background: t.border }} />
+                  </div>
+                  <input key={fileEdicion ? 'file-yes' : 'file-no'} type="file" accept="image/*" onChange={e => { setFileEdicion(e.target.files[0]); setProductoEditando({ ...productoEditando, imagen: '' }); }} style={{ ...inp, padding: '7px 12px' }} />
+                </div>
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Descripción</label>
                 <textarea style={{ ...inp, minHeight: '70px', resize: 'vertical' }} value={productoEditando.descripcion || ''} onChange={e => setProductoEditando({ ...productoEditando, descripcion: e.target.value })} />
               </div>
-              <button type="submit" style={{ padding: '12px', border: 'none', borderRadius: '9px', background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: 'white', fontWeight: '700', cursor: 'pointer', boxShadow: `0 4px 12px ${color}33` }}>
-                Guardar cambios
+              <button type="submit" disabled={guardando} style={{ padding: '12px', border: 'none', borderRadius: '9px', background: guardando ? '#64748b' : `linear-gradient(135deg, ${color}, ${color}cc)`, color: 'white', fontWeight: '700', cursor: guardando ? 'not-allowed' : 'pointer', boxShadow: guardando ? 'none' : `0 4px 12px ${color}33` }}>
+                {guardando ? 'Guardando...' : 'Guardar cambios'}
               </button>
             </form>
           </div>
