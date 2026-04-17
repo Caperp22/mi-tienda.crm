@@ -17,6 +17,8 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
   const [listaServicios, setListaServicios] = useState([]);
   const [cargando, setCargando] = useState(false);
 
+  const imgFallback = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&q=80';
+
   // --- MAGIA: GENERADOR DE HORARIOS DINÁMICO ---
   function generarHorarios() {
     const apertura = empresaConfig?.hora_apertura || '09:00';
@@ -81,8 +83,11 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
     e.preventDefault();
     setCargando(true);
 
+    const nombreCliente = usuario.user_metadata?.nombre || 'Cliente Web';
+    const telefonoCliente = usuario.user_metadata?.telefono || 'No especificado';
+
     const { error } = await supabase.from('citas').insert([{
-      cliente_nombre: usuario.user_metadata?.nombre || 'Cliente Web',
+      cliente_nombre: nombreCliente,
       cliente_email: usuario.email,
       fecha: fecha,
       hora: hora,
@@ -97,8 +102,26 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
     if (error) {
       Swal.fire('Error de Base de Datos', error.message, 'error');
     } else {
-      Swal.fire('¡Cita Agendada!', 'Te esperamos el día de tu reserva.', 'success');
-      navigate('/mis-citas'); 
+      // Armamos el mensaje de WhatsApp para el administrador
+      let textoMensaje = "📅 *¡Nueva Cita Agendada!*\n\n";
+      textoMensaje += `▪️ *Servicio:* ${servicio}\n`;
+      textoMensaje += `▪️ *Fecha:* ${fecha}\n`;
+      textoMensaje += `▪️ *Hora:* ${hora}\n`;
+      textoMensaje += `--------------------------\n`;
+      textoMensaje += `👤 *Cliente:* ${nombreCliente} (${usuario.email})\n`;
+      textoMensaje += `📞 *Teléfono:* ${telefonoCliente}\n`;
+      if (observaciones) {
+        textoMensaje += `📝 *Observaciones:* ${observaciones}\n`;
+      }
+
+      const miNumeroWhatsApp = empresaConfig?.telefono || "521234567890";
+
+      Swal.fire({ icon: 'success', title: '¡Cita Agendada!', text: 'Te esperamos el día de tu reserva.', timer: 2000, showConfirmButton: false });
+      
+      setTimeout(() => {
+        window.open(`https://wa.me/${miNumeroWhatsApp}?text=${encodeURIComponent(textoMensaje)}`, '_blank');
+        navigate('/mis-citas'); 
+      }, 2000);
     }
   }
 
@@ -226,12 +249,36 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
 
         <form onSubmit={confirmarCita}>
           <label style={estilos.label}>¿Qué servicio necesitas?</label>
-          <select style={estilos.input} value={servicio} onChange={(e) => setServicio(e.target.value)} required>
-            <option value="">-- Selecciona una opción --</option>
-            {listaServicios.map(s => (
-              <option key={s.id} value={s.nombre}>{s.nombre} {s.precio > 0 ? `(Desde $${s.precio})` : ''}</option>
-            ))}
-          </select>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+            {listaServicios.map(s => {
+              const seleccionado = servicio === s.nombre;
+              return (
+                <div 
+                  key={s.id} 
+                  onClick={() => setServicio(s.nombre)}
+                  style={{
+                    border: `2px solid ${seleccionado ? cPrin : sys.border}`,
+                    borderRadius: '12px',
+                    padding: '12px',
+                    cursor: 'pointer',
+                    background: sys.cardBg,
+                    textAlign: 'center',
+                    transition: 'all 0.2s',
+                    opacity: (servicio && !seleccionado) ? 0.6 : 1,
+                    transform: seleccionado ? 'scale(1.02)' : 'scale(1)'
+                  }}
+                >
+                  <img src={s.imagen || imgFallback} alt={s.nombre} style={{ width: '100%', height: '100px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px' }} />
+                  <h3 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: 'bold', color: sys.text }}>{s.nombre}</h3>
+                  {s.descripcion && <p style={{ margin: '0 0 8px', fontSize: '11px', color: sys.sub, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{s.descripcion}</p>}
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', alignItems: 'center' }}>
+                    {s.precio > 0 && <span style={{ fontSize: '13px', color: cPrin, fontWeight: '700' }}>${Number(s.precio).toLocaleString('es-CO')}</span>}
+                    {s.duracion && <span style={{ fontSize: '12px', color: sys.sub, display: 'flex', alignItems: 'center', gap: '3px' }}><Clock size={12} /> {s.duracion}'</span>}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
           <label style={estilos.label}><Calendar size={16} style={{ verticalAlign: 'middle', marginRight: '5px' }}/> Día de la cita</label>
           <input type="date" style={estilos.input} value={fecha} onChange={manejarCambioFecha} required />
