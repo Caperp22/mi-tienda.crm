@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Sun, Moon, Bell, User, Calendar, Clock, Sparkles } from 'lucide-react';
 
 function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaId, empresaNombre, empresaConfig }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mostrarNotif, setMostrarNotif] = useState(false);
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
-  const [servicio, setServicio] = useState('');
+  const [servicio, setServicio] = useState(location.state?.servicioPrevio || '');
   const [observaciones, setObservaciones] = useState('');
   
   const [fechasBloqueadas, setFechasBloqueadas] = useState([]);

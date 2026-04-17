@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Calendar, Clock, CheckCircle, XCircle, Trash2, ShieldAlert, ChevronLeft, ChevronRight, Filter, Eye, X } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, Trash2, ShieldAlert, ChevronLeft, ChevronRight, Filter, Eye, X, RefreshCw } from 'lucide-react';
 
 function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, dark = false, color = '#3b82f6' }) {
   const [citas,            setCitas]            = useState([]);
@@ -13,6 +13,9 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
   const [bloqueando,       setBloqueando]       = useState(false);
   const [citaSeleccionada, setCitaSeleccionada] = useState(null);
   const [detallesCliente,  setDetallesCliente]  = useState(null);
+  const [citaReprogramar,  setCitaReprogramar]  = useState(null);
+  const [nuevaFecha,       setNuevaFecha]       = useState('');
+  const [nuevaHora,        setNuevaHora]        = useState('');
 
   /* ─── Tema ──────────────────────────────────────────────── */
   const t = {
@@ -107,6 +110,30 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
     if (cita.cliente_email) {
       const { data } = await supabase.from('clientes').select('telefono, direccion').eq('correo', cita.cliente_email).eq('empresa_id', empresaId).maybeSingle();
       if (data) setDetallesCliente(data);
+    }
+  }
+
+  function abrirReprogramar(cita) {
+    setCitaReprogramar(cita);
+    setNuevaFecha(cita.fecha);
+    setNuevaHora(cita.hora ? cita.hora.substring(0, 5) : '');
+  }
+
+  async function guardarReprogramacion(e) {
+    e.preventDefault();
+    const { error } = await supabase.from('citas').update({ fecha: nuevaFecha, hora: nuevaHora }).eq('id', citaReprogramar.id);
+    if (error) {
+      Swal.fire('Error', error.message, 'error');
+    } else {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cita reprogramada', showConfirmButton: false, timer: 1800 });
+      setCitas(citas.map(c => c.id === citaReprogramar.id ? { ...c, fecha: nuevaFecha, hora: nuevaHora } : c));
+      
+      if (citaReprogramar.cliente_email) {
+        const subject = encodeURIComponent('Reprogramación de cita programada');
+        const body = encodeURIComponent(`Hola ${citaReprogramar.cliente_nombre},\n\nTe informamos que tu cita para el servicio de "${citaReprogramar.servicio}" ha sido reprogramada.\n\nNueva fecha: ${nuevaFecha}\nNueva hora: ${nuevaHora}\n\nSi tienes alguna duda, por favor contáctanos.\n\nSaludos cordiales.`);
+        window.location.href = `mailto:${citaReprogramar.cliente_email}?subject=${subject}&body=${body}`;
+      }
+      setCitaReprogramar(null);
     }
   }
 
@@ -258,6 +285,9 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
                     </button>
                     {cita.estado === 'Pendiente' ? (
                       <>
+                        <button onClick={() => abrirReprogramar(cita)} style={{ padding: '7px 12px', borderRadius: '7px', border: `1px solid ${t.border}`, cursor: 'pointer', fontWeight: '700', fontSize: '12px', background: dark ? 'rgba(59,130,246,0.1)' : '#eff6ff', color: color, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <RefreshCw size={14} /> Reprogramar
+                        </button>
                         <button onClick={() => cambiarEstado(cita.id, 'Completada')} style={{ padding: '7px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer', fontWeight: '700', fontSize: '12px', background: dark ? 'rgba(16,185,129,0.15)' : '#d1fae5', color: '#059669', display: 'flex', alignItems: 'center', gap: '5px' }}>
                           <CheckCircle size={14} /> Completar
                         </button>
@@ -329,6 +359,35 @@ function Agenda({ refreshCitas, notifCitasAdmin, setNotifCitasAdmin, empresaId, 
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal de Reprogramar Cita ───────────────────────── */}
+      {citaReprogramar && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,13,26,0.75)', backdropFilter: 'blur(6px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setCitaReprogramar(null)}>
+          <div style={{ background: t.modal, border: `1px solid ${t.border}`, borderRadius: '16px', width: '100%', maxWidth: '400px', padding: '28px', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', borderBottom: `1px solid ${t.border}`, paddingBottom: '15px' }}>
+              <div>
+                <h2 style={{ margin: '0 0 5px', fontSize: '18px', fontWeight: '800', color: t.text }}>Reprogramar Cita</h2>
+                <p style={{ margin: 0, fontSize: '13px', color: t.sub }}>{citaReprogramar.cliente_nombre} - {citaReprogramar.servicio}</p>
+              </div>
+              <button onClick={() => setCitaReprogramar(null)} style={{ background: dark ? 'rgba(255,255,255,0.06)' : '#f1f5f9', border: 'none', borderRadius: '8px', width: '30px', height: '30px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.sub }}><X size={15} /></button>
+            </div>
+            
+            <form onSubmit={guardarReprogramacion} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Nueva Fecha</label>
+                <input type="date" value={nuevaFecha} onChange={e => setNuevaFecha(e.target.value)} required style={{ ...inp, width: '100%' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Nueva Hora</label>
+                <input type="time" value={nuevaHora} onChange={e => setNuevaHora(e.target.value)} required style={{ ...inp, width: '100%' }} />
+              </div>
+              <button type="submit" style={{ padding: '12px', border: 'none', borderRadius: '9px', background: `linear-gradient(135deg, ${color}, ${color}cc)`, color: 'white', fontWeight: '700', cursor: 'pointer', boxShadow: `0 4px 12px ${color}33`, marginTop: '10px' }}>
+                Guardar Cambios
+              </button>
+            </form>
           </div>
         </div>
       )}

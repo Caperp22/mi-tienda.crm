@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabase';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bell, User, Calendar, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Sun, Moon, Bell, User, Calendar, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notificaciones, setNotificaciones, empresaNombre, empresaConfig }) {
@@ -41,6 +41,32 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
         setCitas(prevCitas => prevCitas.map(c => 
           c.id === citaId ? { ...c, estado: 'Cancelada' } : c
         ));
+      }
+    }
+  }
+
+  async function reprogramarCita(citaId, servicio) {
+    const cita = citas.find(c => c.id === citaId);
+    if (!cita) return;
+
+    const ahora = new Date();
+    const fechaCita = new Date(`${cita.fecha}T${cita.hora}`);
+    const horasDeAnticipacion = (fechaCita - ahora) / (1000 * 60 * 60);
+    const HORAS_MINIMAS = 2;
+
+    if (horasDeAnticipacion < HORAS_MINIMAS) {
+      return Swal.fire({ title: 'No se puede reprogramar', text: `Las citas solo se pueden modificar con al menos ${HORAS_MINIMAS} horas de anticipación.`, icon: 'warning', confirmButtonColor: cPrin });
+    }
+
+    const { isConfirmed } = await Swal.fire({ title: '¿Reprogramar cita?', text: `Cancelaremos tu cita actual de "${servicio}" para que puedas elegir un nuevo horario.`, icon: 'info', showCancelButton: true, confirmButtonColor: cPrin, cancelButtonText: 'Volver', confirmButtonText: 'Sí, reprogramar' });
+
+    if (isConfirmed) {
+      const { error } = await supabase.from('citas').update({ estado: 'Cancelada' }).eq('id', citaId);
+      if (error) { 
+        Swal.fire('Error', 'No se pudo procesar. Intenta de nuevo.', 'error'); 
+      } else { 
+        Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cita cancelada. Elige tu nuevo horario.', showConfirmButton: false, timer: 2500 }); 
+        navigate('/agendar', { state: { servicioPrevio: servicio } });
       }
     }
   }
@@ -196,9 +222,14 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
                   </div>
 
                   {cita.estado === 'Pendiente' && puedeCancelar && (
-                    <button onClick={() => cancelarCita(cita.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <XCircle size={14} /> Cancelar Cita
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => reprogramarCita(cita.id, cita.servicio)} style={{ background: `${cPrin}18`, color: cPrin, border: `1px solid ${cPrin}40`, padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <RefreshCw size={14} /> Reprogramar
+                      </button>
+                      <button onClick={() => cancelarCita(cita.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '7px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <XCircle size={14} /> Cancelar
+                      </button>
+                    </div>
                   )}
                 </div>
 
