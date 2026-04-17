@@ -117,6 +117,12 @@ function AgendarCita({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, not
 
       const miNumeroWhatsApp = empresaConfig?.telefono || "521234567890";
 
+      // Notificación local de éxito
+      setNotificaciones(prev => [
+        { id: Date.now(), ruta: '/mis-citas', texto: `¡Tu cita para ${servicio} el ${fecha} ha sido confirmada!` },
+        ...(Array.isArray(prev) ? prev : [])
+      ]);
+
       Swal.fire({ icon: 'success', title: '¡Cita Agendada!', text: 'Te esperamos el día de tu reserva.', timer: 2000, showConfirmButton: false });
       
       setTimeout(() => {

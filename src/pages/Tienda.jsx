@@ -23,7 +23,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
     localStorage.setItem('miCarrito', JSON.stringify(carrito));
   }, [carrito]);
 
-  const miNumeroWhatsApp = "521234567890"; 
+  const miNumeroWhatsApp = empresaConfig?.telefono || "521234567890"; 
   const imgFallback = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&q=80';
 
   useEffect(() => {
@@ -195,6 +195,13 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
       setCuponAplicado(null);
       setCodigoCupon('');
       setMostrarCarrito(false);
+
+      // Notificación local de éxito
+      setNotificaciones(prev => [
+        { id: Date.now(), ruta: '/mis-pedidos', texto: `¡Tu pedido por ${fmt(totalFinal)} ha sido registrado con éxito!` },
+        ...(Array.isArray(prev) ? prev : [])
+      ]);
+
       Swal.fire({ icon: 'success', title: '¡Pedido Registrado!', timer: 2000, showConfirmButton: false });
       
       setTimeout(() => { 

@@ -41,6 +41,12 @@ function MisCitas({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
         setCitas(prevCitas => prevCitas.map(c => 
           c.id === citaId ? { ...c, estado: 'Cancelada' } : c
         ));
+        
+        // Notificación local
+        setNotificaciones(prev => [
+          { id: Date.now(), ruta: '/mis-citas', texto: `Has cancelado tu cita de ${cita.servicio}.` },
+          ...(Array.isArray(prev) ? prev : [])
+        ]);
       }
     }
   }

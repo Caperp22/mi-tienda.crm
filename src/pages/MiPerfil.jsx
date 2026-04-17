@@ -32,6 +32,12 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
       Swal.fire('Error', error.message, 'error');
     } else {
       Swal.fire('¡Perfil Actualizado!', 'Tus datos se guardaron correctamente.', 'success');
+      
+      // Notificación local
+      setNotificaciones(prev => [
+        { id: Date.now(), ruta: '/mi-perfil', texto: 'Has actualizado tu información de perfil.' },
+        ...(Array.isArray(prev) ? prev : [])
+      ]);
     }
   }
 
