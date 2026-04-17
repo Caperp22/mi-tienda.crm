@@ -35,13 +35,17 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
   /* ─── Datos ─────────────────────────────────────────────── */
   const obtener = useCallback(async () => {
     setCargando(true);
-    const query = supabase.from('clientes').select('*').order('nombre', { ascending: true });
-    if (empresaId) query.eq('empresa_id', empresaId);
-    const { data } = await query;
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('*')
+      .eq('empresa_id', empresaId)
+      .order('nombre', { ascending: true });
+    if (error) { setCargando(false); return; }
     setClientes(data || []);
     setCargando(false);
   }, [empresaId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { obtener(); }, [obtener]);
 
   /* ─── CRUD ──────────────────────────────────────────────── */
@@ -65,13 +69,20 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
     }
   }
 
-  const filtrados = clientes.filter(c =>
-    c.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    c.correo?.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const filtrados = clientes.filter(c => {
+    if (!busqueda) return true; // Si no hay búsqueda, mostramos a todos (incluso a los que tienen datos nulos)
+    const nom = String(c.nombre || '').toLowerCase();
+    const cor = String(c.correo || '').toLowerCase();
+    const b = String(busqueda).toLowerCase();
+    return nom.includes(b) || cor.includes(b);
+  });
 
-  const avatar = nombre => (nombre || '?').charAt(0).toUpperCase();
-  const date   = s => s ? new Date(s).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+  const avatar = nombre => String(nombre || '?').charAt(0).toUpperCase();
+  const date = s => {
+    if (!s) return '—';
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
 
   return (
     <div style={{ maxWidth: '1000px' }}>
@@ -199,11 +210,11 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
             <form onSubmit={guardarEdicion} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Correo (no editable)</label>
-                <input style={{ ...inp, background: t.disabled, color: t.sub, cursor: 'not-allowed' }} value={clienteEditando.correo} disabled />
+                <input style={{ ...inp, background: t.disabled, color: t.sub, cursor: 'not-allowed' }} value={clienteEditando.correo || ''} disabled />
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Nombre</label>
-                <input style={inp} value={clienteEditando.nombre} onChange={e => setClienteEditando({ ...clienteEditando, nombre: e.target.value })} required />
+                <input style={inp} value={clienteEditando.nombre || ''} onChange={e => setClienteEditando({ ...clienteEditando, nombre: e.target.value })} required />
               </div>
               <div>
                 <label style={{ fontSize: '12px', fontWeight: '600', color: t.sub, display: 'block', marginBottom: '5px' }}>Teléfono</label>

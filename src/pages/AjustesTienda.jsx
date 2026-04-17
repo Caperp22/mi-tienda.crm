@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 import Swal from 'sweetalert2';
-import { Settings, Image as ImageIcon, Palette, Save, Clock, TrendingUp, Zap, Star, Crown, Send } from 'lucide-react';
+import { Settings, Image as ImageIcon, Palette, Save, Clock, TrendingUp, Zap, Star, Crown, Send, Phone } from 'lucide-react';
 import { MODULOS_DISPONIBLES, INFO_PLANES, MODULOS_POR_PLAN } from '../config/modulos';
 
 function AjustesTienda({ empresaId }) {
@@ -13,6 +13,7 @@ function AjustesTienda({ empresaId }) {
   const [horaApertura, setHoraApertura] = useState('09:00');
   const [horaCierre, setHoraCierre] = useState('18:00');
   const [intervaloCitas, setIntervaloCitas] = useState(30);
+  const [telefono, setTelefono] = useState('');
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
@@ -26,7 +27,7 @@ function AjustesTienda({ empresaId }) {
     async function cargarConfig() {
       const { data } = await supabase
         .from('empresas')
-        .select('color_principal, color_secundario, color_terciario, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, modulos')
+        .select('color_principal, color_secundario, color_terciario, logo_url, hora_apertura, hora_cierre, intervalo_citas, plan, modulos, telefono')
         .eq('id', empresaId)
         .single();
       if (data) {
@@ -39,6 +40,7 @@ function AjustesTienda({ empresaId }) {
         setIntervaloCitas(data.intervalo_citas || 30);
         setPlanActual(data.plan || 'básico');
         setModulosActuales(data.modulos || {});
+        setTelefono(data.telefono || '');
       }
 
       // Ver si hay solicitud de upgrade pendiente
@@ -71,7 +73,7 @@ function AjustesTienda({ empresaId }) {
 
       const { error } = await supabase
         .from('empresas')
-        .update({ color_principal: colorPrincipal, color_secundario: colorSecundario, color_terciario: colorTerciario, logo_url: nuevaUrl, hora_apertura: horaApertura, hora_cierre: horaCierre, intervalo_citas: intervaloCitas })
+        .update({ color_principal: colorPrincipal, color_secundario: colorSecundario, color_terciario: colorTerciario, logo_url: nuevaUrl, hora_apertura: horaApertura, hora_cierre: horaCierre, intervalo_citas: intervaloCitas, telefono: telefono })
         .eq('id', empresaId);
 
       if (error) throw error;
@@ -105,6 +107,13 @@ function AjustesTienda({ empresaId }) {
       // Recargar para mostrar estado pendiente
       const { data: sol } = await supabase.from('solicitudes_upgrade').select('*').eq('empresa_id', empresaId).eq('estado', 'pendiente').maybeSingle();
       setSolicitudPendiente(sol);
+
+      // Enviar WhatsApp al Super Admin
+      const { data: sysConf } = await supabase.from('sistema_config').select('telefono_whatsapp').eq('id', 1).maybeSingle();
+      if (sysConf && sysConf.telefono_whatsapp) {
+        const msg = `👋 Hola Soporte, solicito una mejora al plan *${planDeseado.toUpperCase()}* para mi tienda.\nPor favor revisen la solicitud en el panel.`;
+        window.open(`https://wa.me/${sysConf.telefono_whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
     } catch (error) {
       Swal.fire('Error', error.message, 'error');
     } finally {
@@ -223,6 +232,18 @@ function AjustesTienda({ empresaId }) {
           <Palette size={18} color="#3b82f6" /> Apariencia y Horarios
         </h2>
         <form onSubmit={guardarAjustes}>
+          <div style={estilos.inputGroup}>
+            <label style={estilos.label}><Phone size={15} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Teléfono / WhatsApp (Notificaciones)</label>
+            <input 
+              type="tel" 
+              style={{ ...estilos.fileInput, background: 'white' }} 
+              placeholder="Ej. 573001234567 (Incluye el código de país)" 
+              value={telefono} 
+              onChange={e => setTelefono(e.target.value)} 
+            />
+            <p style={{ margin: '5px 0 0', fontSize: '12px', color: '#64748b' }}>A este número llegarán los mensajes de WhatsApp por nuevos pedidos o citas agendadas.</p>
+          </div>
+
           <div style={estilos.inputGroup}>
             <label style={estilos.label}><Palette size={15} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Colores de la Marca</label>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '15px' }}>

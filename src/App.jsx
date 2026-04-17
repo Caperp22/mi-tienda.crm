@@ -18,6 +18,7 @@ import GestionAdmins from './pages/GestionAdmins';
 import GestionEmpresas from './pages/GestionEmpresas';
 import GestionAdminsGlobal from './pages/GestionAdminsGlobal';
 import GestionClientesGlobal from './pages/GestionClientesGlobal';
+import SolicitudesUpgrade from './pages/SolicitudesUpgrade';
 import AjustesTienda from './pages/AjustesTienda';
 import DashboardAdmin from './pages/DashboardAdmin';
 import Domicilios from './pages/Domicilios';
@@ -139,94 +140,6 @@ function useAuth() {
   return { usuario, rol, empresaId, empresaNombre, empresaConfig, cargando };
 }
 
-// ─── Vista de Solicitudes de Upgrade (SuperAdmin) ────────────────────────────
-function VistasSolicitudesUpgrade() {
-  const [solicitudes, setSolicitudes] = useState([]);
-  const [cargando, setCargando] = useState(true);
-
-  useEffect(() => {
-    async function cargar() {
-      const { data } = await supabase
-        .from('solicitudes_upgrade')
-        .select('*, empresas(nombre, email_admin)')
-        .order('created_at', { ascending: false });
-      setSolicitudes(data || []);
-      setCargando(false);
-    }
-    cargar();
-  }, []);
-
-  async function responder(id, empresaId, planSolicitado, accion) {
-    if (accion === 'aprobar') {
-      const { error } = await supabase.from('empresas').update({
-        plan: planSolicitado,
-        modulos: (await import('./config/modulos')).getModulosPorDefecto(planSolicitado),
-        usa_inventario: ['básico','pro','advance'].includes(planSolicitado),
-        usa_citas: ['pro','advance'].includes(planSolicitado),
-      }).eq('id', empresaId);
-      if (error) { Swal.fire('Error', error.message, 'error'); return; }
-    }
-    await supabase.from('solicitudes_upgrade').update({ estado: accion === 'aprobar' ? 'aprobada' : 'rechazada' }).eq('id', id);
-    Swal.fire({ toast: true, position: 'top-end', icon: accion === 'aprobar' ? 'success' : 'info', title: accion === 'aprobar' ? '¡Plan actualizado!' : 'Solicitud rechazada', showConfirmButton: false, timer: 3000 });
-    setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, estado: accion === 'aprobar' ? 'aprobada' : 'rechazada' } : s));
-  }
-
-  if (cargando) return <p style={{ color: '#64748b' }}>Cargando solicitudes...</p>;
-
-  return (
-    <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-        <TrendingUp size={30} color="#3b82f6" />
-        <h1 style={{ fontSize: '26px', color: '#1e293b', margin: 0, fontWeight: '800' }}>Solicitudes de Upgrade</h1>
-      </div>
-      <p style={{ color: '#64748b', marginBottom: '30px' }}>Empresas que solicitan cambiar su plan de suscripción.</p>
-
-      {solicitudes.length === 0 ? (
-        <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '60px', textAlign: 'center' }}>
-          <TrendingUp size={40} color="#e2e8f0" style={{ marginBottom: '15px' }} />
-          <p style={{ color: '#94a3b8', fontSize: '16px', margin: 0 }}>No hay solicitudes pendientes.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {solicitudes.map(sol => (
-            <div key={sol.id} style={{ background: 'white', borderRadius: '12px', border: `1px solid ${sol.estado === 'pendiente' ? '#fde68a' : sol.estado === 'aprobada' ? '#a7f3d0' : '#fecaca'}`, padding: '20px 25px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-              <div style={{ flex: 1 }}>
-                <p style={{ margin: '0 0 4px 0', fontWeight: 'bold', color: '#1e293b', fontSize: '15px' }}>{sol.empresas?.nombre || 'Empresa'}</p>
-                <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#64748b' }}>{sol.empresas?.email_admin}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ background: '#f1f5f9', color: '#64748b', padding: '2px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
-                    {sol.plan_actual?.toUpperCase()}
-                  </span>
-                  <span style={{ color: '#94a3b8', fontSize: '16px' }}>→</span>
-                  <span style={{ background: '#eff6ff', color: '#2563eb', padding: '2px 10px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold' }}>
-                    {sol.plan_solicitado?.toUpperCase()}
-                  </span>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{new Date(sol.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                {sol.estado === 'pendiente' ? (
-                  <>
-                    <button onClick={() => responder(sol.id, sol.empresa_id, sol.plan_solicitado, 'aprobar')} style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Check size={15} /> Aprobar
-                    </button>
-                    <button onClick={() => responder(sol.id, sol.empresa_id, sol.plan_solicitado, 'rechazar')} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#ef4444', border: '1px solid #fecaca', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <XIcon size={15} /> Rechazar
-                    </button>
-                  </>
-                ) : (
-                  <span style={{ padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 'bold', background: sol.estado === 'aprobada' ? '#dcfce3' : '#fee2e2', color: sol.estado === 'aprobada' ? '#166534' : '#991b1b' }}>
-                    {sol.estado === 'aprobada' ? '✓ Aprobada' : '✗ Rechazada'}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function App() {
   const { usuario, rol, empresaId, empresaNombre, empresaConfig, cargando } = useAuth();
@@ -539,7 +452,7 @@ function App() {
             {vistaSuperAdmin === 'empresas' && <GestionEmpresas dark={esTemaOscuro} />}
             {vistaSuperAdmin === 'admins' && <GestionAdminsGlobal />}
             {vistaSuperAdmin === 'clientes' && <GestionClientesGlobal />}
-            {vistaSuperAdmin === 'solicitudes' && <VistasSolicitudesUpgrade />}
+            {vistaSuperAdmin === 'solicitudes' && <SolicitudesUpgrade dark={esTemaOscuro} />}
           </div>
         </div>
       </div>

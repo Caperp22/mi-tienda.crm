@@ -164,7 +164,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
         descuento: descuentoCalculado > 0 ? descuentoCalculado : null,
       }]);
 
-      if (error) return Swal.fire('Error', 'Hubo un problema', 'error');
+      if (error) return Swal.fire('Error al crear pedido', error.message, 'error');
 
       // Incrementar el contador de usos del cupón
       if (cuponAplicado) {

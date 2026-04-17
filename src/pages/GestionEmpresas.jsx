@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import {
   Building2, Plus, Store, Calendar, Palette, Image as ImageIcon, Clock,
   Trash2, Zap, Star, Crown, Package, ShoppingBag, Users, DollarSign,
-  BarChart2, Shield, Briefcase, Edit3, X, Save, Mail, KeyRound,
+  BarChart2, Shield, Briefcase, Edit3, X, Save, Mail, KeyRound, Phone,
   Truck, Tag, Monitor, UserCheck, Gift, FileText, Copy, Check,
   ChevronDown, ChevronUp, Lock, Search, Filter,
   Power, ChevronRight,
@@ -200,6 +200,7 @@ function GestionEmpresas({ dark = false }) {
   const [horaAp, setHoraAp] = useState('09:00');
   const [horaCi, setHoraCi] = useState('18:00');
   const [intCitas, setIntCitas] = useState(30);
+  const [telefono, setTelefono] = useState('');
   const [enviando, setEnviando] = useState(false);
 
   // Modal edición
@@ -209,6 +210,7 @@ function GestionEmpresas({ dark = false }) {
   const [editColorPrin, setEditColorPrin] = useState('#3b82f6');
   const [editColorSec, setEditColorSec] = useState('#0f172a');
   const [editColorTer, setEditColorTer] = useState('#f59e0b');
+  const [editTelefono, setEditTelefono] = useState('');
   const [guardando, setGuardando] = useState(false);
 
   const cargar = useCallback(async () => {
@@ -241,8 +243,8 @@ useEffect(() => { cargar(); }, [cargar]);
       const { data, error: ee } = await supabase.from('empresas').insert([{
         nombre, rut, slug, email_admin: email, licencia, plan, modulos,
         usa_inventario: modulos.inventario || false, usa_citas: modulos.agenda || false,
-        color_principal: colorPrin, color_secundario: colorSec, color_terciario: colorTer, logo_url: logoUrl,
-        hora_apertura: horaAp, hora_cierre: horaCi, intervalo_citas: intCitas, estado: 'activa',
+        color_principal: colorPrin, color_secundario: colorSec, color_terciario: colorTer, logo_url: logoUrl, telefono,
+        hora_apertura: horaAp, hora_cierre: horaCi, intervalo_citas: intCitas, estado: 'activa'
       }]).select();
       if (ee) throw ee;
       const nueva = data[0];
@@ -288,7 +290,7 @@ useEffect(() => { cargar(); }, [cargar]);
       }
       setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro')); 
       setColorPrin('#3b82f6'); setColorSec('#0f172a'); setColorTer('#f59e0b');
-      setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setPaso(1);
+      setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setTelefono(''); setPaso(1);
       cargar();
     } catch (err) { Swal.fire('Error', err.message, 'error'); }
     finally { setEnviando(false); }
@@ -297,7 +299,7 @@ useEffect(() => { cargar(); }, [cargar]);
   async function guardarEdicion() {
     setGuardando(true);
     try {
-      const { error } = await supabase.from('empresas').update({ plan: editPlan, modulos: editMods, usa_inventario: editMods.inventario || false, usa_citas: editMods.agenda || false, color_principal: editColorPrin, color_secundario: editColorSec, color_terciario: editColorTer }).eq('id', editEmp.id);
+      const { error } = await supabase.from('empresas').update({ plan: editPlan, modulos: editMods, usa_inventario: editMods.inventario || false, usa_citas: editMods.agenda || false, color_principal: editColorPrin, color_secundario: editColorSec, color_terciario: editColorTer, telefono: editTelefono }).eq('id', editEmp.id);
       if (error) throw error;
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambios guardados', showConfirmButton: false, timer: 2500 });
       setEditEmp(null); cargar();
@@ -446,6 +448,10 @@ useEffect(() => { cargar(); }, [cargar]);
                   <div>
                     <label style={lbl}><Mail size={9} style={{ display: 'inline', marginRight: '3px' }} />Correo del admin</label>
                     <input type="email" placeholder="admin@empresa.com" value={email} onChange={e => setEmail(e.target.value)} style={{ ...inp, borderColor: email ? '#3b82f6' : t.inputBorder }} required />
+                  </div>
+                  <div>
+                    <label style={lbl}><Phone size={9} style={{ display: 'inline', marginRight: '3px' }} />Teléfono (WhatsApp)</label>
+                    <input type="tel" placeholder="Ej. 573001234567" value={telefono} onChange={e => setTelefono(e.target.value)} style={inp} />
                   </div>
                   <div>
                     <label style={lbl}><Palette size={9} style={{ display: 'inline', marginRight: '3px' }} />Colores de la marca</label>
@@ -689,7 +695,7 @@ useEffect(() => { cargar(); }, [cargar]);
 
                           <td style={{ padding: '10px 14px' }}>
                             <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                              <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); setEditColorPrin(emp.color_principal || '#3b82f6'); setEditColorSec(emp.color_secundario || '#0f172a'); setEditColorTer(emp.color_terciario || '#f59e0b'); }}
+                              <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); setEditColorPrin(emp.color_principal || '#3b82f6'); setEditColorSec(emp.color_secundario || '#0f172a'); setEditColorTer(emp.color_terciario || '#f59e0b'); setEditTelefono(emp.telefono || ''); }}
                                 title="Configurar módulos y plan"
                                 style={{ padding: '5px 10px', background: '#3b82f618', color: '#60a5fa', border: '1px solid #3b82f630', borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Edit3 size={11} />Configurar
@@ -754,6 +760,10 @@ useEffect(() => { cargar(); }, [cargar]);
                   <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px 0' }}>Color Terciario</p>
                   <input type="color" value={editColorTer} onChange={e => setEditColorTer(e.target.value)} style={{ width: '100%', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer' }} />
                 </div>
+              </div>
+              <div style={{ marginBottom: '15px' }}>
+                <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px 0' }}>Teléfono (WhatsApp)</p>
+                <input type="tel" value={editTelefono} onChange={e => setEditTelefono(e.target.value)} placeholder="Ej. 573001234567" style={{ ...inp, width: '100%' }} />
               </div>
               <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 10px 0' }}>Plan de suscripción</p>
               <SelectorPlan planActual={editPlan} onChange={p => { setEditPlan(p); setEditMods(getModulosPorDefecto(p)); }} t={t} />
