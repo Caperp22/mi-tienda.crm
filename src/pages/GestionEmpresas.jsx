@@ -7,7 +7,7 @@ import {
   BarChart2, Shield, Briefcase, Edit3, X, Save, Mail, KeyRound, Phone,
   Truck, Tag, Monitor, UserCheck, Gift, FileText, Copy, Check,
   ChevronDown, ChevronUp, Lock, Search, Filter,
-  Power, ChevronRight,
+  Power, ChevronRight, RefreshCw, CreditCard, AlertTriangle,
 } from 'lucide-react';
 import {
   MODULOS_DISPONIBLES, MODULOS_POR_PLAN, getModulosPorDefecto,
@@ -211,7 +211,13 @@ function GestionEmpresas({ dark = false }) {
   const [editColorSec, setEditColorSec] = useState('#0f172a');
   const [editColorTer, setEditColorTer] = useState('#f59e0b');
   const [editTelefono, setEditTelefono] = useState('');
+  const [editSuscTipo, setEditSuscTipo] = useState('mensual');
+  const [editSuscVence, setEditSuscVence] = useState('');
+  const [editPagoPendiente, setEditPagoPendiente] = useState(false);
   const [guardando, setGuardando] = useState(false);
+
+  // Estado para el wizard de creación
+  const [suscTipo, setSuscTipo] = useState('mensual');
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -244,7 +250,8 @@ useEffect(() => { cargar(); }, [cargar]);
         nombre, rut, slug, email_admin: email, licencia, plan, modulos,
         usa_inventario: modulos.inventario || false, usa_citas: modulos.agenda || false,
         color_principal: colorPrin, color_secundario: colorSec, color_terciario: colorTer, logo_url: logoUrl, telefono,
-        hora_apertura: horaAp, hora_cierre: horaCi, intervalo_citas: intCitas, estado: 'activa'
+        hora_apertura: horaAp, hora_cierre: horaCi, intervalo_citas: intCitas, estado: 'activa',
+        suscripcion_tipo: suscTipo, pago_pendiente: false,
       }]).select();
       if (ee) throw ee;
       const nueva = data[0];
@@ -288,9 +295,9 @@ useEffect(() => { cargar(); }, [cargar]);
           </div>`,
         });
       }
-      setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro')); 
+      setNombre(''); setRut(''); setSlug(''); setEmail(''); setPlan('pro'); setModulos(getModulosPorDefecto('pro'));
       setColorPrin('#3b82f6'); setColorSec('#0f172a'); setColorTer('#f59e0b');
-      setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setTelefono(''); setPaso(1);
+      setLogoFile(null); setHoraAp('09:00'); setHoraCi('18:00'); setIntCitas(30); setTelefono(''); setSuscTipo('mensual'); setPaso(1);
       cargar();
     } catch (err) { Swal.fire('Error', err.message, 'error'); }
     finally { setEnviando(false); }
@@ -299,7 +306,15 @@ useEffect(() => { cargar(); }, [cargar]);
   async function guardarEdicion() {
     setGuardando(true);
     try {
-      const { error } = await supabase.from('empresas').update({ plan: editPlan, modulos: editMods, usa_inventario: editMods.inventario || false, usa_citas: editMods.agenda || false, color_principal: editColorPrin, color_secundario: editColorSec, color_terciario: editColorTer, telefono: editTelefono }).eq('id', editEmp.id);
+      const { error } = await supabase.from('empresas').update({
+        plan: editPlan, modulos: editMods,
+        usa_inventario: editMods.inventario || false, usa_citas: editMods.agenda || false,
+        color_principal: editColorPrin, color_secundario: editColorSec, color_terciario: editColorTer,
+        telefono: editTelefono,
+        suscripcion_tipo: editSuscTipo,
+        suscripcion_vence: editSuscVence || null,
+        pago_pendiente: editPagoPendiente,
+      }).eq('id', editEmp.id);
       if (error) throw error;
       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Cambios guardados', showConfirmButton: false, timer: 2500 });
       setEditEmp(null); cargar();
@@ -336,6 +351,40 @@ useEffect(() => { cargar(); }, [cargar]);
     const texto = `Empresa: ${emp.nombre}\nEmail: ${emp.email_admin}\nLicencia: ${emp.licencia}\nAcceso: ${url}`;
     await navigator.clipboard.writeText(texto);
     Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Credenciales y enlace copiados', showConfirmButton: false, timer: 2000 });
+  }
+
+  function diasRestantes(vence) {
+    if (!vence) return null;
+    const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+    const v = new Date(vence); v.setHours(0, 0, 0, 0);
+    return Math.round((v - hoy) / 86400000);
+  }
+
+  async function renovar(emp) {
+    const tipo = emp.suscripcion_tipo || 'mensual';
+    const dias = tipo === 'anual' ? 365 : 30;
+    const base = emp.suscripcion_vence && new Date(emp.suscripcion_vence) > new Date()
+      ? new Date(emp.suscripcion_vence)
+      : new Date();
+    base.setDate(base.getDate() + dias);
+    const nuevaFecha = base.toISOString().split('T')[0];
+    const { error } = await supabase.from('empresas')
+      .update({ suscripcion_vence: nuevaFecha, pago_pendiente: false })
+      .eq('id', emp.id);
+    if (error) return Swal.fire('Error', error.message, 'error');
+    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: `Renovado hasta ${nuevaFecha}`, showConfirmButton: false, timer: 2500 });
+    cargar();
+  }
+
+  async function confirmarPago(emp) {
+    const { isConfirmed } = await Swal.fire({
+      title: '¿Confirmar pago recibido?',
+      text: `Se renovará la suscripción de ${emp.nombre}.`,
+      icon: 'question', showCancelButton: true,
+      confirmButtonColor: '#10b981', confirmButtonText: 'Confirmar pago', cancelButtonText: 'Cancelar',
+    });
+    if (!isConfirmed) return;
+    await renovar(emp);
   }
 
   const emp_filtradas = empresas.filter(e =>
@@ -452,6 +501,13 @@ useEffect(() => { cargar(); }, [cargar]);
                   <div>
                     <label style={lbl}><Phone size={9} style={{ display: 'inline', marginRight: '3px' }} />Teléfono (WhatsApp)</label>
                     <input type="tel" placeholder="Ej. 573001234567" value={telefono} onChange={e => setTelefono(e.target.value)} style={inp} />
+                  </div>
+                  <div>
+                    <label style={lbl}><CreditCard size={9} style={{ display: 'inline', marginRight: '3px' }} />Tipo de suscripción</label>
+                    <select value={suscTipo} onChange={e => setSuscTipo(e.target.value)} style={{ ...inp, cursor: 'pointer' }}>
+                      <option value="mensual">Mensual (30 días)</option>
+                      <option value="anual">Anual (365 días)</option>
+                    </select>
                   </div>
                   <div>
                     <label style={lbl}><Palette size={9} style={{ display: 'inline', marginRight: '3px' }} />Colores de la marca</label>
@@ -619,7 +675,7 @@ useEffect(() => { cargar(); }, [cargar]);
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ background: dark ? 'rgba(255,255,255,0.03)' : '#f8fafc' }}>
-                      {['Empresa', 'Plan', 'Módulos', 'Estado', 'Creación', 'Acciones'].map(h => (
+                      {['Empresa', 'Plan', 'Módulos', 'Suscripción', 'Estado', 'Creación', 'Acciones'].map(h => (
                         <th key={h} style={{ padding: '9px 14px', fontSize: '9.5px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '0.7px', borderBottom: `1px solid ${t.border}`, textAlign: h === 'Acciones' ? 'center' : 'left' }}>{h}</th>
                       ))}
                     </tr>
@@ -680,6 +736,33 @@ useEffect(() => { cargar(); }, [cargar]);
                             </div>
                           </td>
 
+                          <td style={{ padding: '10px 14px', minWidth: '120px' }}>
+                            {(() => {
+                              const dias = diasRestantes(emp.suscripcion_vence);
+                              const tipo = emp.suscripcion_tipo || 'mensual';
+                              const colorDias = dias === null ? t.muted : dias > 7 ? '#00d68f' : dias > 0 ? '#fbbf24' : '#f87171';
+                              return (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: tipo === 'anual' ? '#a78bfa18' : '#3b82f618', color: tipo === 'anual' ? '#a78bfa' : '#60a5fa', border: `1px solid ${tipo === 'anual' ? '#a78bfa30' : '#3b82f630'}`, padding: '2px 7px', borderRadius: '5px', fontSize: '9px', fontWeight: '700', width: 'fit-content' }}>
+                                    {tipo === 'anual' ? <Crown size={9} /> : <Zap size={9} />} {tipo.toUpperCase()}
+                                  </span>
+                                  {dias !== null ? (
+                                    <span style={{ fontSize: '10px', color: colorDias, fontWeight: '600' }}>
+                                      {dias > 0 ? `${dias}d restantes` : dias === 0 ? 'Vence hoy' : `Vencida (${Math.abs(dias)}d)`}
+                                    </span>
+                                  ) : (
+                                    <span style={{ fontSize: '10px', color: t.muted }}>Sin fecha</span>
+                                  )}
+                                  {emp.pago_pendiente && (
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', background: '#f59e0b18', color: '#f59e0b', border: '1px solid #f59e0b30', padding: '1px 5px', borderRadius: '4px', fontSize: '8px', fontWeight: '700', width: 'fit-content' }}>
+                                      <AlertTriangle size={8} /> PAGO PEND.
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </td>
+
                           <td style={{ padding: '10px 14px' }}>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 9px', borderRadius: '12px', fontSize: '10px', fontWeight: '700', background: emp.estado === 'activa' ? '#00d68f18' : '#ef444418', color: emp.estado === 'activa' ? '#00d68f' : '#f87171', border: `1px solid ${emp.estado === 'activa' ? '#00d68f30' : '#ef444430'}` }}>
                               <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: emp.estado === 'activa' ? '#00d68f' : '#f87171' }} />
@@ -695,7 +778,7 @@ useEffect(() => { cargar(); }, [cargar]);
 
                           <td style={{ padding: '10px 14px' }}>
                             <div style={{ display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                              <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); setEditColorPrin(emp.color_principal || '#3b82f6'); setEditColorSec(emp.color_secundario || '#0f172a'); setEditColorTer(emp.color_terciario || '#f59e0b'); setEditTelefono(emp.telefono || ''); }}
+                              <button onClick={() => { setEditEmp(emp); setEditPlan(emp.plan || 'básico'); setEditMods(emp.modulos ? { ...emp.modulos } : getModulosPorDefecto(emp.plan || 'básico')); setEditColorPrin(emp.color_principal || '#3b82f6'); setEditColorSec(emp.color_secundario || '#0f172a'); setEditColorTer(emp.color_terciario || '#f59e0b'); setEditTelefono(emp.telefono || ''); setEditSuscTipo(emp.suscripcion_tipo || 'mensual'); setEditSuscVence(emp.suscripcion_vence || ''); setEditPagoPendiente(emp.pago_pendiente || false); }}
                                 title="Configurar módulos y plan"
                                 style={{ padding: '5px 10px', background: '#3b82f618', color: '#60a5fa', border: '1px solid #3b82f630', borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Edit3 size={11} />Configurar
@@ -710,6 +793,18 @@ useEffect(() => { cargar(); }, [cargar]);
                                 style={{ padding: '5px 8px', background: emp.estado === 'activa' ? '#fbbf2418' : '#00d68f18', color: emp.estado === 'activa' ? '#fbbf24' : '#00d68f', border: `1px solid ${emp.estado === 'activa' ? '#fbbf2430' : '#00d68f30'}`, borderRadius: '6px', cursor: 'pointer', fontSize: '10px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '3px' }}>
                                 <Power size={11} />{emp.estado === 'activa' ? 'Pausar' : 'Activar'}
                               </button>
+                              <button onClick={() => renovar(emp)}
+                                title="Renovar suscripción"
+                                style={{ padding: '5px 8px', background: '#10b98118', color: '#10b981', border: '1px solid #10b98130', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: '700' }}>
+                                <RefreshCw size={11} />Renovar
+                              </button>
+                              {emp.pago_pendiente && (
+                                <button onClick={() => confirmarPago(emp)}
+                                  title="Confirmar pago recibido"
+                                  style={{ padding: '5px 8px', background: '#f59e0b18', color: '#f59e0b', border: '1px solid #f59e0b30', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: '700' }}>
+                                  <CreditCard size={11} />Pago
+                                </button>
+                              )}
                               <button onClick={() => eliminar(emp.id, emp.nombre)}
                                 title="Eliminar empresa"
                                 style={{ padding: '5px 7px', background: '#ef444418', color: '#f87171', border: '1px solid #ef444430', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
@@ -765,6 +860,33 @@ useEffect(() => { cargar(); }, [cargar]);
                 <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 6px 0' }}>Teléfono (WhatsApp)</p>
                 <input type="tel" value={editTelefono} onChange={e => setEditTelefono(e.target.value)} placeholder="Ej. 573001234567" style={{ ...inp, width: '100%' }} />
               </div>
+
+              {/* Suscripción */}
+              <div style={{ background: dark ? 'rgba(255,255,255,0.03)' : '#f8fafc', border: `1px solid ${t.border}`, borderRadius: '10px', padding: '14px 16px', marginBottom: '16px' }}>
+                <p style={{ fontSize: '10px', fontWeight: '800', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CreditCard size={12} /> Suscripción
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '10px' }}>
+                  <div>
+                    <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '0.8px', margin: '0 0 5px 0' }}>Tipo</p>
+                    <select value={editSuscTipo} onChange={e => setEditSuscTipo(e.target.value)} style={{ ...inp, width: '100%', cursor: 'pointer' }}>
+                      <option value="mensual">Mensual (30 días)</option>
+                      <option value="anual">Anual (365 días)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '0.8px', margin: '0 0 5px 0' }}>Vence el</p>
+                    <input type="date" value={editSuscVence} onChange={e => setEditSuscVence(e.target.value)} style={{ ...inp, width: '100%' }} />
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', userSelect: 'none' }}>
+                  <input type="checkbox" checked={editPagoPendiente} onChange={e => setEditPagoPendiente(e.target.checked)} style={{ width: '14px', height: '14px', cursor: 'pointer', accentColor: '#f59e0b' }} />
+                  <span style={{ fontSize: '12px', color: editPagoPendiente ? '#f59e0b' : t.muted, fontWeight: editPagoPendiente ? '700' : '400' }}>
+                    {editPagoPendiente ? '⚠️ Marcar como pago pendiente' : 'Pago al día'}
+                  </span>
+                </label>
+              </div>
+
               <p style={{ fontSize: '10px', fontWeight: '700', color: t.muted, textTransform: 'uppercase', letterSpacing: '1px', margin: '0 0 10px 0' }}>Plan de suscripción</p>
               <SelectorPlan planActual={editPlan} onChange={p => { setEditPlan(p); setEditMods(getModulosPorDefecto(p)); }} t={t} />
               <div style={{ height: '1px', background: t.border, margin: '16px 0' }} />
