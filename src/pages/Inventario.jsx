@@ -186,6 +186,7 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
           <span style={{ fontSize: '12px', color: t.sub, flexShrink: 0 }}>{filtrados.length} productos</span>
         </div>
 
+        <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -242,6 +243,7 @@ function Inventario({ empresaId, dark = false, color = '#3b82f6' }) {
             ))}
           </tbody>
         </table>
+        </div>
         {filtrados.length === 0 && !cargando && (
           <div style={{ padding: '40px', textAlign: 'center', color: t.sub }}>
             {busqueda ? 'No hay productos con esa búsqueda.' : 'No hay productos en el inventario.'}

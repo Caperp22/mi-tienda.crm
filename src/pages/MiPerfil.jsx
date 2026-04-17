@@ -58,7 +58,7 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
 
   const estilos = {
     container: { minHeight: '100vh', color: sys.text, transition: 'color 0.3s', overflowX: 'hidden' },
-    navbar: { background: sys.navBg, padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sys.border}`, position: 'sticky', top: 0, zIndex: 100 },
+    navbar: { background: sys.navBg, padding: '15px 20px', display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sys.border}`, position: 'sticky', top: 0, zIndex: 100 },
     navLinks: { color: sys.text, textDecoration: 'none', fontWeight: '600', transition: 'color 0.2s' },
     badgeNotif: { position: 'absolute', top: '-6px', right: '-6px', background: cTer, color: '#fff', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold' },
     formCard: { background: sys.cardBg, maxWidth: '500px', margin: '60px auto', padding: '40px', borderRadius: '16px', border: `1px solid ${sys.border}`, boxShadow: d ? '0 10px 25px -5px rgba(0,0,0,0.5)' : '0 10px 25px -5px rgba(0,0,0,0.05)' },
@@ -77,7 +77,7 @@ function MiPerfil({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifi
             <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{empresaNombre || 'Mi Tienda'}</div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '25px', alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'center' }}>
           {empresaConfig?.usa_inventario && (
             <>
               <Link to="/" style={estilos.navLinks}>Catálogo</Link>

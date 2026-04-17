@@ -90,10 +90,10 @@ function POS({ empresaId, dark = false, color = '#3b82f6' }) {
   }
 
   return (
-    <div style={{ display: 'flex', gap: '20px', height: 'calc(100vh - 120px)', minHeight: '500px' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', height: 'auto', minHeight: 'calc(100vh - 120px)' }}>
 
       {/* ── Panel izquierdo: productos ─────────────── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0 }}>
+      <div style={{ flex: '1 1 400px', display: 'flex', flexDirection: 'column', gap: '14px', minWidth: 0 }}>
         <div style={{ marginBottom: '4px' }}>
           <h1 style={{ margin: '0 0 4px', fontSize: '22px', fontWeight: '800', color: t.text, display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Monitor size={20} color={color} /> Punto de Venta
@@ -129,7 +129,7 @@ function POS({ empresaId, dark = false, color = '#3b82f6' }) {
       </div>
 
       {/* ── Panel derecho: carrito ─────────────────── */}
-      <div style={{ width: '300px', flexShrink: 0, display: 'flex', flexDirection: 'column', background: t.card, border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden' }}>
+      <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', background: t.card, border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden' }}>
         {/* Header carrito */}
         <div style={{ padding: '16px 18px', borderBottom: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <ShoppingCart size={16} color={color} />

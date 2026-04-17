@@ -146,11 +146,11 @@ function Login() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'system-ui,-apple-system,sans-serif' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', minHeight: '100vh', fontFamily: 'system-ui,-apple-system,sans-serif' }}>
 
       {/* ══ Panel izquierdo — Marca ══════════════════════════════ */}
       <div className="login-brand" style={{
-        width: '42%', background: `linear-gradient(160deg, ${NAVY} 0%, #0c2340 55%, #110d2e 100%)`,
+        flex: '1 1 400px', background: `linear-gradient(160deg, ${NAVY} 0%, #0c2340 55%, #110d2e 100%)`,
         display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
         padding: '60px 44px', position: 'relative', overflow: 'hidden',
       }}>
@@ -207,7 +207,7 @@ function Login() {
 
       {/* ══ Panel derecho — Formulario público ══════════════════ */}
       <div className="login-form-panel" style={{
-        flex: 1, background: '#f8fafc',
+        flex: '1 1 400px', background: '#f8fafc',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '40px 20px',
       }}>

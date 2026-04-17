@@ -155,6 +155,7 @@ function Servicios({ empresaId, dark = false, color = '#3b82f6' }) {
 
       {/* Tabla */}
       <div style={{ background: t.card, border: `1px solid ${t.border}`, borderRadius: '14px', overflow: 'hidden', boxShadow: dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)' }}>
+        <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
@@ -201,6 +202,7 @@ function Servicios({ empresaId, dark = false, color = '#3b82f6' }) {
             ))}
           </tbody>
         </table>
+        </div>
         {servicios.length === 0 && !cargando && (
           <div style={{ padding: '40px', textAlign: 'center', color: t.sub }}>No hay servicios registrados.</div>
         )}

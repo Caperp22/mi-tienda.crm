@@ -106,6 +106,7 @@ function Clientes({ empresaId, dark = false, color = '#3b82f6' }) {
           )}
         </div>
 
+        <div style={{ overflowX: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>

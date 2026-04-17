@@ -229,7 +229,7 @@ function Tienda({ usuario, esTemaOscuro, setEsTemaOscuro, cerrarSesion, notifica
 
   const estilos = {
     container: { minHeight: '100vh', color: sys.text, transition: 'color 0.3s', overflowX: 'hidden' },
-    navbar: { background: sys.navBg, padding: '15px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sys.border}`, position: 'sticky', top: 0, zIndex: 100, transition: 'background-color 0.3s, border-color 0.3s' },
+    navbar: { background: sys.navBg, padding: '15px 20px', display: 'flex', flexWrap: 'wrap', gap: '15px', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${sys.border}`, position: 'sticky', top: 0, zIndex: 100, transition: 'background-color 0.3s, border-color 0.3s' },
     navLinks: { color: sys.text, textDecoration: 'none', fontWeight: '600', transition: 'color 0.2s' },
     heroSection: { padding: '40px 20px', maxWidth: '1200px', margin: '0 auto', borderBottom: `1px solid ${sys.border}`, marginBottom: '30px' },
     heroTitle: { fontSize: '2.5rem', fontWeight: '800', margin: '0 0 10px 0' },

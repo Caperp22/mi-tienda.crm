@@ -97,7 +97,7 @@ function Pedidos({ refreshPedidos, notificacionesAdmin, setNotificacionesAdmin, 
       </div>
 
       {/* Kanban */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', flex: 1, minHeight: 0 }}>
         {cols.map(estado => {
           const cfg   = ESTADOS[estado];
           const lista = pedidos.filter(p => p.estado === estado && (!filtrarCupones || p.cupon_aplicado));
